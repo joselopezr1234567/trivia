@@ -151,7 +151,7 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Crear Usuario",
+                text = "",
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White,
                 fontWeight = FontWeight.Bold

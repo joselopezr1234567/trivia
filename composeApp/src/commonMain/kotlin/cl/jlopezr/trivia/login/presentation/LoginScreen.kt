@@ -13,31 +13,43 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.jlopezr.trivia.login.domain.AuthRepository
 import myapplication.composeapp.generated.resources.Res
 import myapplication.composeapp.generated.resources.btn_entrar
 import myapplication.composeapp.generated.resources.fondo
-
 import org.jetbrains.compose.resources.painterResource
-// Nota: Si btn_entrar o fondo dan error, recuerda que se acceden como Res.drawable.nombre
-
 import kotlin.random.Random
-import kotlin.math.*
+
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = viewModel<LoginViewModel> { LoginViewModel(authRepository = DummyAuthRepository()) },
     onNavigateToHome: () -> Unit,
     onNavigateToRegister: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
 ) {
     val state: LoginUiState by viewModel.state.collectAsState()
+
+    // Estilo común para todas las letras: Blancas con borde negro
+    val outlineStyle = TextStyle(
+        color = Color.White,
+        shadow = Shadow(
+            color = Color.Black,
+            offset = Offset(0f, 0f),
+            blurRadius = 8f
+        )
+    )
 
     LaunchedEffect(state.isLoginSuccess) {
         if (state.isLoginSuccess) {
@@ -46,7 +58,6 @@ fun LoginScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        // 1. IMAGEN DE FONDO
         Image(
             painter = painterResource(Res.drawable.fondo),
             contentDescription = null,
@@ -54,16 +65,10 @@ fun LoginScreen(
             contentScale = ContentScale.Crop
         )
 
-        // 2. ESTRELLAS FUGACES (Ahora son 15 estrellas en todas direcciones)
-        repeat(15) {
-            ShootingStar()
-        }
+        repeat(15) { ShootingStar() }
 
-        // 3. CONTENIDO (Vidrio y formulario)
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -74,9 +79,7 @@ fun LoginScreen(
                     width = 0.5.dp,
                     color = Color.White.copy(alpha = 0.3f)
                 ),
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth(0.9f)
+                modifier = Modifier.padding(8.dp).fillMaxWidth(0.9f)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -84,47 +87,37 @@ fun LoginScreen(
                 ) {
                     Text(
                         text = "Iniciar Sesión",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = Color.White
+                        style = outlineStyle.copy(
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // TextField Email
                     TextField(
                         value = state.email,
                         onValueChange = { viewModel.onEmailChanged(it) },
-                        label = { Text("Email", color = Color.Black.copy(alpha = 0.6f)) },
+                        label = { Text("Email", style = outlineStyle.copy(fontSize = 14.sp)) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White.copy(alpha = 0.2f),
-                            unfocusedContainerColor = Color.White.copy(alpha = 0.1f),
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            focusedIndicatorColor = Color.Black,
-                            unfocusedIndicatorColor = Color.Black.copy(alpha = 0.5f),
-                            cursorColor = Color.Black
-                        )
+                        textStyle = outlineStyle,
+                        colors = textFieldCustomColors()
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // TextField Contraseña
                     TextField(
                         value = state.password,
                         onValueChange = { viewModel.onPasswordChanged(it) },
-                        label = { Text("Contraseña", color = Color.Black.copy(alpha = 0.6f)) },
+                        label = { Text("Contraseña", style = outlineStyle.copy(fontSize = 14.sp)) },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White.copy(alpha = 0.2f),
-                            unfocusedContainerColor = Color.White.copy(alpha = 0.1f),
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            focusedIndicatorColor = Color.Black,
-                            unfocusedIndicatorColor = Color.Black.copy(alpha = 0.5f),
-                            cursorColor = Color.Black
-                        )
+                        textStyle = outlineStyle,
+                        colors = textFieldCustomColors()
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -132,62 +125,35 @@ fun LoginScreen(
                     if (state.isLoading) {
                         CircularProgressIndicator(color = Color.White)
                     } else {
-                        val interactionSource = remember { MutableInteractionSource() }
-                        val isPressed by interactionSource.collectIsPressedAsState()
-                        val buttonOffset by animateDpAsState(if (isPressed) 6.dp else (-4).dp)
+                        LoginAnimatedButton(state, viewModel, outlineStyle)
+                    }
 
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxWidth().height(80.dp).padding(horizontal = 40.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize().offset(y = 8.dp)
-                                    .clip(RoundedCornerShape(30.dp))
-                                    .background(Color.Black.copy(alpha = 0.5f))
-                            )
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.fillMaxSize().offset(y = buttonOffset)
-                                    .clip(RoundedCornerShape(30.dp))
-                                    .clickable(
-                                        interactionSource = interactionSource,
-                                        indication = null,
-                                        enabled = state.email.isNotBlank() && state.password.isNotBlank(),
-                                        onClick = { viewModel.login() }
-                                    )
-                            ) {
-                                Image(
-                                    painter = painterResource(Res.drawable.btn_entrar),
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.FillBounds
-                                )
-                                Text(
-                                    text = "ENTRAR",
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                                )
-                            }
-                        }
+                    // Registro
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(text = "¿No tienes cuenta? ", style = outlineStyle)
+                        Text(
+                            text = "Haz clic aquí",
+                            style = outlineStyle.copy(fontWeight = FontWeight.Black),
+                            modifier = Modifier.clickable { onNavigateToRegister() }
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(text = "¿No tienes cuenta? ", color = Color.White.copy(alpha = 0.8f))
-                        Text(
-                            text = "Haz clic aquí",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.clickable { onNavigateToRegister()}
+                    // Olvidé mi contraseña (Grande y con borde)
+                    Text(
+                        text = "¿Se te olvidó la contraseña?",
+                        modifier = Modifier.clickable { onNavigateToForgotPassword() },
+                        style = outlineStyle.copy(
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.ExtraBold
                         )
-                    }
+                    )
                 }
             }
         }
@@ -195,14 +161,63 @@ fun LoginScreen(
 }
 
 @Composable
+fun textFieldCustomColors() = TextFieldDefaults.colors(
+    focusedContainerColor = Color.White.copy(alpha = 0.2f),
+    unfocusedContainerColor = Color.White.copy(alpha = 0.1f),
+    focusedTextColor = Color.White,
+    unfocusedTextColor = Color.White,
+    focusedIndicatorColor = Color.Transparent,
+    unfocusedIndicatorColor = Color.Transparent,
+    cursorColor = Color.White
+)
+
+@Composable
+fun LoginAnimatedButton(state: LoginUiState, viewModel: LoginViewModel, textStyle: TextStyle) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val buttonOffset by animateDpAsState(if (isPressed) 6.dp else (-4).dp)
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxWidth().height(80.dp).padding(horizontal = 40.dp)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize().offset(y = 8.dp)
+                .clip(RoundedCornerShape(30.dp))
+                .background(Color.Black.copy(alpha = 0.5f))
+        )
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize().offset(y = buttonOffset)
+                .clip(RoundedCornerShape(30.dp))
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = state.email.isNotBlank() && state.password.isNotBlank(),
+                    onClick = { viewModel.login() }
+                )
+        ) {
+            Image(
+                painter = painterResource(Res.drawable.btn_entrar),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds
+            )
+            Text(
+                text = "ENTRAR",
+                style = textStyle.copy(fontSize = 22.sp, fontWeight = FontWeight.Black)
+            )
+        }
+    }
+}
+
+@Composable
 fun ShootingStar() {
     val infiniteTransition = rememberInfiniteTransition()
-
-    // Parámetros aleatorios únicos por estrella
     val startX = remember { Random.nextFloat() * 1000f }
     val startY = remember { Random.nextFloat() * 800f }
-    val angle = remember { Random.nextFloat() * 360f } // Dirección aleatoria (0 a 360 grados)
-    val speed = remember { Random.nextFloat() * 600f + 400f } // Velocidad aleatoria
+    val angle = remember { Random.nextFloat() * 360f }
+    val speed = remember { Random.nextFloat() * 600f + 400f }
     val duration = remember { Random.nextInt(1500, 4000) }
     val delay = remember { Random.nextInt(0, 8000) }
 
@@ -220,7 +235,6 @@ fun ShootingStar() {
     )
 
     if (progress > 0f) {
-        // Cálculo matemático para mover en cualquier dirección basado en el ángulo
         val rad = (angle * (kotlin.math.PI / 180)).toFloat()
         val xOffset = progress * speed * kotlin.math.cos(rad.toDouble()).toFloat()
         val yOffset = progress * speed * kotlin.math.sin(rad.toDouble()).toFloat()
@@ -229,7 +243,7 @@ fun ShootingStar() {
             modifier = Modifier
                 .offset(x = (startX + xOffset).dp, y = (startY + yOffset).dp)
                 .size(width = 120.dp, height = 2.dp)
-                .graphicsLayer(rotationZ = angle) // La estrella apunta hacia donde viaja
+                .graphicsLayer(rotationZ = angle)
                 .background(
                     brush = Brush.horizontalGradient(
                         colors = listOf(Color.Transparent, Color.White.copy(alpha = 0.6f))

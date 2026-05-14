@@ -1,13 +1,13 @@
 
 import UIKit
 import SwiftUI
-import ComposeApp // Si este sigue en rojo, es por la compilación fallida de Gradle
+import ComposeApp
 
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
-        // Kotlin genera el nombre de la clase basado en el archivo y el paquete
-        // Prueba con la ruta completa si falla la anterior:
-        cl_jlopezr_triviaMainViewControllerKt.MainViewController()
+        // En la mayoría de las configuraciones de KMP,
+        // la función se expone simplemente como MainViewControllerKt
+        return MainViewControllerKt.MainViewController()
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}

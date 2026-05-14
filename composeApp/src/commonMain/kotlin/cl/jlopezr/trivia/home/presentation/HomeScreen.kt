@@ -1,0 +1,259 @@
+package cl.jlopezr.trivia.home.presentation
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import cl.jlopezr.trivia.core.components.TriviaBackgroundContainer
+import cl.jlopezr.trivia.core.components.TriviaButton
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(
+    onNavigateToRanking: () -> Unit,
+    onGenerateQuestions: (category: String, difficulty: String) -> Unit,
+    viewModel: HomeViewModel
+) {
+    val state by viewModel.uiState.collectAsState()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    val difficulties = listOf("Básico", "Intermedio", "Difícil")
+
+    // Estilo general con sombra negra para legibilidad
+    val outlineStyle = TextStyle(
+        color = Color.White,
+        shadow = Shadow(
+            color = Color.Black,
+            offset = Offset(2f, 2f),
+            blurRadius = 4f
+        )
+    )
+
+    // Estilo específico para el placeholder (más grande y con borde negro marcado)
+    val placeholderStyle = TextStyle(
+        color = Color.White.copy(alpha = 0.8f),
+        fontSize = 20.sp,
+        fontWeight = FontWeight.Bold,
+        shadow = Shadow(
+            color = Color.Black,
+            offset = Offset(3f, 3f),
+            blurRadius = 2f
+        )
+    )
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                // MENU MÁS TRANSPARENTE
+                drawerContainerColor = Color.Black.copy(alpha = 0.75f),
+                modifier = Modifier.width(280.dp),
+                drawerShape = RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp),
+                drawerTonalElevation = 0.dp
+            ) {
+                Spacer(modifier = Modifier.height(48.dp))
+
+                Text(
+                    text = " MENÚ TRIV-IA",
+                    style = outlineStyle.copy(fontSize = 22.sp, fontWeight = FontWeight.Black),
+                    modifier = Modifier.padding(16.dp)
+                )
+
+                HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
+
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = Color.Yellow) },
+                    label = { Text("Ranking Global", style = outlineStyle.copy(fontSize = 16.sp)) },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToRanking()
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = Color.Transparent,
+                        selectedContainerColor = Color.White.copy(alpha = 0.1f)
+                    ),
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        }
+    ) {
+        TriviaBackgroundContainer {
+            Scaffold(
+                containerColor = Color.Transparent,
+                topBar = {
+                    CenterAlignedTopAppBar(
+                        title = {
+                            Text(
+                                "TRIV-IA",
+                                style = outlineStyle.copy(fontSize = 24.sp, fontWeight = FontWeight.Black)
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Default.Menu, contentDescription = "Menú", tint = Color.White)
+                            }
+                        },
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = Color.Transparent
+                        )
+                    )
+                }
+            ) { padding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.height(150.dp))
+
+                    Text(
+                        text = "¡Bienvenido!",
+                        style = outlineStyle.copy(fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
+                    )
+
+                    Text(
+                        text = "Elige una categoría para jugar",
+                        style = outlineStyle.copy(fontSize = 18.sp),
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(40.dp))
+
+                    // INPUT CON EFECTO DE PROFUNDIDAD
+                    Box(modifier = Modifier.fillMaxWidth().height(65.dp)) {
+                        // Capa de fondo para la sombra/profundidad
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .offset(y = 4.dp)
+                                .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                        )
+                        // Superficie principal del input
+                        Surface(
+                            color = Color.White.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(2.dp, Color.White.copy(alpha = 0.3f)),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            TextField(
+                                value = state.category,
+                                onValueChange = { viewModel.onCategoryChanged(it) },
+                                placeholder = {
+                                    Text("Ej: Fútbol, Marvel, Historia...", style = placeholderStyle)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                textStyle = outlineStyle.copy(fontSize = 20.sp),
+                                singleLine = true,
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    cursorColor = Color.White,
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                )
+                            )
+                        }
+                    }
+
+                    if (state.errorMessage != null) {
+                        Text(
+                            text = state.errorMessage!!,
+                            color = Color.Red,
+                            style = outlineStyle.copy(fontSize = 14.sp),
+                            modifier = Modifier.align(Alignment.Start).padding(top = 8.dp, start = 8.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(60.dp)) // Espacio hacia el centro
+
+                    // DIFICULTADES CENTRADAS EN LA MITAD
+                    Text(
+                        text = "Dificultad:",
+                        style = outlineStyle.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center, // CENTRADO
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        items(difficulties) { diff ->
+                            val isSelected = state.difficulty == diff
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { viewModel.onDifficultySelected(diff) },
+                                label = {
+                                    Text(
+                                        text = diff,
+                                        style = if (isSelected)
+                                            TextStyle(fontWeight = FontWeight.Black, fontSize = 16.sp)
+                                        else outlineStyle.copy(fontSize = 16.sp)
+                                    )
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color.White,
+                                    selectedLabelColor = Color.Black,
+                                    containerColor = Color.White.copy(alpha = 0.1f)
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = isSelected,
+                                    borderColor = Color.White.copy(alpha = 0.3f),
+                                    selectedBorderColor = Color.White,
+                                    borderWidth = 1.dp,
+                                    selectedBorderWidth = 2.dp
+                                ),
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    if (state.isLoading) {
+                        CircularProgressIndicator(color = Color.White)
+                    } else {
+                        TriviaButton(
+                            text = "GENERAR PREGUNTAS",
+                            enabled = state.category.isNotBlank() && !state.isLoading,
+                            onClick = {
+                                viewModel.generateTrivia { cat: String, diff: String ->
+                                    onGenerateQuestions(cat, diff)
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
+                            textStyle = outlineStyle.copy(fontSize = 20.sp, fontWeight = FontWeight.Black)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

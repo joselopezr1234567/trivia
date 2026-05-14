@@ -15,43 +15,43 @@ kotlin {
         }
     }
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    // ✅ Definimos los targets una sola vez
+    val iosX64 = iosX64()
+    val iosArm64 = iosArm64()
+    val iosSimulatorArm64 = iosSimulatorArm64()
 
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
+    // ✅ Configuramos los binarios usando la referencia a los targets ya creados
+    listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
+            // OPCIONAL: Desactivar caché aquí si el error de Autoboxing persiste
+             freeCompilerArgs += listOf("-Xdisable-phases=Autoboxing")
         }
     }
 
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // UI y Compose
                 implementation(libs.compose.runtime)
                 implementation(libs.compose.foundation)
                 implementation(libs.compose.material3)
                 implementation(libs.compose.ui)
                 implementation(libs.compose.components.resources)
                 implementation(libs.compose.uiToolingPreview)
+                implementation(compose.materialIconsExtended)
 
-                // Arquitectura y Navegación
                 implementation(libs.androidx.lifecycle.viewmodelCompose)
                 implementation(libs.androidx.lifecycle.runtimeCompose)
                 implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.0")
-                implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha02")
+
+                // NOTA: Si sigue fallando el build en Intel, considera bajar esta a 2.7.0-alpha07
+                implementation("org.jetbrains.androidx.navigation:navigation-compose:2.7.0-alpha07")
+                implementation("org.jetbrains.androidx.navigation:navigation-runtime:2.7.0-alpha07")
+                implementation("org.jetbrains.androidx.navigation:navigation-common:2.7.0-alpha07")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-
-                // Lógica de Negocio
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
-
-                // ❌ MOVIMOS MockK y kotlin("test") DE AQUÍ HACIA commonTest
+                implementation("org.jetbrains.androidx.core:core-bundle:1.0.0-alpha01")
             }
         }
 
@@ -62,14 +62,13 @@ kotlin {
             }
         }
 
-        // ✅ TODAS LAS DEPENDENCIAS DE TEST VAN AQUÍ
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+                implementation("io.mockk:mockk:1.13.12")
+                implementation(kotlin("test"))
 
-                // MockK específico para Multiplatform
-                implementation("io.mockk:mockk:1.13.10")
             }
         }
     }
@@ -105,4 +104,3 @@ android {
 dependencies {
     debugImplementation(libs.compose.uiTooling)
 }
-
