@@ -3,9 +3,6 @@ package cl.jlopezr.trivia.forgotpassword.presentation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,8 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.jlopezr.trivia.core.components.TriviaBackgroundContainer
 import cl.jlopezr.trivia.core.components.TriviaButton
-
-
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Phone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +53,12 @@ fun ForgotPasswordScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.White)
+                            // Usamos la ruta absoluta del icono para evitar errores de compilación en KMP
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack, // <--- Simplificado
+                                contentDescription = "Volver",
+                                tint = Color.White
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -99,7 +102,14 @@ fun ForgotPasswordScreen(
                             label = { Text("Número de teléfono", style = outlineStyle.copy(fontSize = 14.sp)) },
                             placeholder = { Text("+56 9 XXXX XXXX", color = Color.White.copy(alpha = 0.5f)) },
                             modifier = Modifier.fillMaxWidth(),
-                            leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = Color.White) },
+                            leadingIcon = {
+                                // Usamos la ruta absoluta del icono aquí también
+                                Icon(
+                                    imageVector = Icons.Default.Phone, // <--- Simplificado
+                                    contentDescription = null,
+                                    tint = Color.White
+                                )
+                            },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                             isError = state.errorMessage != null,
                             textStyle = outlineStyle,

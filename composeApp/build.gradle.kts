@@ -39,19 +39,24 @@ kotlin {
                 implementation(libs.compose.ui)
                 implementation(libs.compose.components.resources)
                 implementation(libs.compose.uiToolingPreview)
-                implementation(compose.materialIconsExtended)
+                implementation(compose.materialIconsExtended) // Asegúrate de mantener la estructura exacta que tienes aquí
 
                 implementation(libs.androidx.lifecycle.viewmodelCompose)
                 implementation(libs.androidx.lifecycle.runtimeCompose)
                 implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.0")
 
-                // NOTA: Si sigue fallando el build en Intel, considera bajar esta a 2.7.0-alpha07
                 implementation("org.jetbrains.androidx.navigation:navigation-compose:2.7.0-alpha07")
                 implementation("org.jetbrains.androidx.navigation:navigation-runtime:2.7.0-alpha07")
                 implementation("org.jetbrains.androidx.navigation:navigation-common:2.7.0-alpha07")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
                 implementation("org.jetbrains.androidx.core:core-bundle:1.0.0-alpha01")
+
+                // 🌐 AGREGA ESTAS 3 LÍNEAS PARA EL CLIENTE KTOR:
+                implementation("io.ktor:ktor-client-core:2.3.11")
+                implementation("io.ktor:ktor-client-content-negotiation:2.3.11")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.11")
+                implementation(libs.compose.material3)
             }
         }
 
