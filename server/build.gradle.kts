@@ -24,6 +24,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty-jvm:2.3.11")
     implementation("io.ktor:ktor-server-content-negotiation-jvm:2.3.11")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.11")
+    implementation("io.ktor:ktor-server-auth-jwt-jvm:2.3.11")
 
     // --- EXPOSED ORM & DATABASE DRIVERS ---
     implementation("org.jetbrains.exposed:exposed-core:0.50.0")

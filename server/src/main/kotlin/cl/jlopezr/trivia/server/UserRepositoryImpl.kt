@@ -16,26 +16,37 @@ class UserRepositoryImpl : UserRepository {
         // 1. Encriptar contraseña antes de guardar
         val hashedPassword = SecurityUtils.hashPassword(request.password)
 
-        // 2. Insertar en la tabla principal 'users'
+        // 2. MODO HARDCORE: Generar código de verificación aleatorio de 6 dígitos
+        val randomSmsCode = (100000..999999).random().toString()
+
+        // 3. Insertar en la tabla principal 'users' incluyendo el código simulado
         val generatedId = UsersTable.insert {
             it[username] = request.username
             it[email] = request.email
             it[password] = hashedPassword
             it[phone] = request.phone
+            it[verificationCode] = randomSmsCode // 🔒 Guardado seguro en local
         } get UsersTable.id
 
-        // 3. Inicializar su tabla de puntos en 0
+        // 4. Inicializar su tabla de puntos en 0
         UserPointsTable.insert {
             it[userId] = generatedId
             it[totalPoints] = 0
         }
 
-        // 4. Inicializar su tabla de niveles en 1
+        // 5. Inicializar su tabla de niveles en 1
         UserLevelsTable.insert {
             it[userId] = generatedId
             it[currentLevel] = 1
             it[currentExperience] = 0
         }
+
+        // 🔥 IMPRIMIR SMS EN CONSOLA (Simulación local)
+        val targetPhone = request.phone ?: "+569XXXXXXXX"
+        println("\n========================================================")
+        println("📱 [SMS SIMULADO] Enviando mensaje al número: $targetPhone")
+        println("💬 Mensaje: Tu código de verificación de Trivia es: $randomSmsCode")
+        println("========================================================\n")
 
         UserProfileResponse(
             id = generatedId,
@@ -84,5 +95,13 @@ class UserRepositoryImpl : UserRepository {
             currentLevel = currentLevel,
             currentExperience = currentExperience
         )
+    }
+    override suspend fun verifySmsCode(userId: Int, code: String): Boolean = DatabaseFactory.dbQuery {
+        val userRow = UsersTable.select { UsersTable.id eq userId }.singleOrNull() ?: return@dbQuery false
+
+        val savedCode = userRow[UsersTable.verificationCode]
+
+        // Compara el código ingresado por el usuario con el de la Base de Datos
+        savedCode == code
     }
 }

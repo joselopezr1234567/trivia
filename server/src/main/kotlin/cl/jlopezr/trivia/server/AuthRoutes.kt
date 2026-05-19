@@ -15,16 +15,21 @@ fun Route.registerAuthRoutes(userRepository: UserRepository) {
             try {
                 val request = call.receive<UserRegisterRequest>()
 
-                // Validaciones básicas antes de tocar la BD
                 if (request.username.isBlank() || request.email.isBlank() || request.password.isBlank()) {
                     return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Todos los campos obligatorios deben ser completados"))
                 }
 
                 val profile = userRepository.registerUser(request)
                 if (profile != null) {
-                    call.respond(HttpStatusCode.Created, profile)
+                    // Generamos el token usando el ID asignado por Postgres
+                    val token = JwtConfig.generateToken(profile.id)
+
+                    // Ya no generamos un random extra aquí. El repositorio ya imprimió
+                    // en la consola el código real que se guardó en la base de datos.
+
+                    call.respond(HttpStatusCode.Created, profile.copy(token = token))
                 } else {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "El nombre de usuario o el correo electrónico ya se encuentran registrados"))
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "El nombre de usuario o el correo ya existen"))
                 }
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error interno: ${e.localizedMessage}"))
@@ -42,10 +47,30 @@ fun Route.registerAuthRoutes(userRepository: UserRepository) {
 
                 val profile = userRepository.loginUser(request)
                 if (profile != null) {
-                    call.respond(HttpStatusCode.OK, profile)
+                    val token = JwtConfig.generateToken(profile.id)
+                    call.respond(HttpStatusCode.OK, profile.copy(token = token))
                 } else {
-                    // 401 Unauthorized para credenciales incorrectas
                     call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Credenciales incorrectas. Verifica tu email o contraseña."))
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error interno: ${e.localizedMessage}"))
+            }
+        }
+
+        // 📲 ENDPOINT: VERIFICACIÓN DEL CÓDIGO HARDCOREADO
+        post("/verify") {
+            try {
+                val request = call.receive<VerifyCodeRequest>()
+
+                if (request.code.isBlank()) {
+                    return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "El código de verificación no puede estar vacío"))
+                }
+
+                val isSuccess = userRepository.verifySmsCode(request.userId, request.code)
+                if (isSuccess) {
+                    call.respond(HttpStatusCode.OK, mapOf("status" to "success", "message" to "Cuenta verificada exitosamente"))
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("status" to "error", "message" to "Código incorrecto o expirado"))
                 }
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error interno: ${e.localizedMessage}"))

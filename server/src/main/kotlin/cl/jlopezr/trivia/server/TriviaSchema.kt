@@ -12,6 +12,7 @@ object UsersTable : Table("users") {
     val password = text("password") // Aquí Ktor procesará la contraseña encriptada
     val phone = varchar("phone", 20).uniqueIndex().nullable() // .nullable() por si decides dejarlo opcional
     val createdAt = datetime("created_at").default(LocalDateTime.now())
+    val verificationCode = varchar("verification_code", 6).default("000000")
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -61,5 +62,12 @@ data class UserProfileResponse(
     val phone: String?,
     val totalPoints: Int,
     val currentLevel: Int,
-    val currentExperience: Int
+    val currentExperience: Int,
+    val token: String? = null // 👈 Agregamos el token aquí (opcional por defecto)
+)
+
+@kotlinx.serialization.Serializable
+data class VerifyCodeRequest(
+    val userId: Int,
+    val code: String
 )

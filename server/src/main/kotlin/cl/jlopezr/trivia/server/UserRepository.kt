@@ -9,4 +9,6 @@ interface UserRepository {
 
     // Obtiene el estado actual del usuario por su ID
     suspend fun getUserProfile(userId: Int): UserProfileResponse?
+
+    suspend fun verifySmsCode(userId: Int, code: String): Boolean
 }
