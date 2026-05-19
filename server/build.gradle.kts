@@ -1,6 +1,7 @@
 plugins {
     // Usamos id estándar y quitamos la versión para que use la global de la raíz
     id("org.jetbrains.kotlin.jvm")
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.20"
     id("io.ktor.plugin") version "2.3.11" // El plugin de Ktor sí lleva versión porque es único de este módulo
     application
 }
