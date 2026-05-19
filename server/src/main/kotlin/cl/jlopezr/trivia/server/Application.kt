@@ -1,12 +1,12 @@
 package cl.jlopezr.trivia.server
 
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.deleteAll
+import kotlinx.serialization.json.Json
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
@@ -14,47 +14,23 @@ fun main() {
 }
 
 fun Application.module() {
+    // Inicializa la conexión local a PostgreSQL 16
     DatabaseFactory.init()
 
+    // 🌐 Instala el soporte nativo para JSON
+    install(ContentNegotiation) {
+        json(Json {
+            prettyPrint = true
+            isLenient = true
+            ignoreUnknownKeys = true // Evita que el servidor explote si la app móvil envía campos de más
+        })
+    }
+
+    // Instanciamos el repositorio bajo Clean Architecture
+    val userRepository: UserRepository = UserRepositoryImpl()
+
+    // Registramos las rutas pasándole el repositorio
     routing {
-        get("/") {
-            call.respondText("¡Servidor de Trivia Ktor con Hashing Automatizado!")
-        }
-
-        get("/test-hash") {
-            try {
-                DatabaseFactory.dbQuery {
-                    // Limpiamos registros anteriores para que no tire error de UNIQUE index al probar
-                    UserLevelsTable.deleteAll()
-                    UserPointsTable.deleteAll()
-                    UsersTable.deleteAll()
-
-                    // 1. Encriptamos la contraseña usando nuestro utilitario
-                    val contrasenaOriginal = "mi_clave_secreta_123"
-                    val contrasenaEncriptada = SecurityUtils.hashPassword(contrasenaOriginal)
-
-                    // 2. Insertar Usuario con la contraseña protegida
-                    val userIdInserted = UsersTable.insert {
-                        it[username] = "JLdeveloper"
-                        it[email] = "contacto@jlopezr.cl"
-                        it[password] = contrasenaEncriptada // 🔒 Guardamos el Hash irreversible
-                        it[phone] = "+56912345678"
-                    } get UsersTable.id
-
-                    // 3. Crear registros satélites iniciales en cascada
-                    UserPointsTable.insert {
-                        it[userId] = userIdInserted
-                        it[totalPoints] = 100 // Le damos 100 puntos de bienvenida por probar
-                    }
-                    UserLevelsTable.insert {
-                        it[userId] = userIdInserted
-                        it[currentLevel] = 1
-                    }
-                }
-                call.respondText("✅ Prueba Exitosa. Usuario registrado con contraseña encriptada en SHA-256.")
-            } catch (e: Exception) {
-                call.respondText("❌ Error: ${e.localizedMessage}")
-            }
-        }
+        registerAuthRoutes(userRepository)
     }
 }
