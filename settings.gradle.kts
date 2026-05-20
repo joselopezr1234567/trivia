@@ -27,11 +27,12 @@ dependencyResolutionManagement {
         mavenCentral()
     }
     versionCatalogs {
-        create("build") {
+        create("buildCatalog") { // Le cambiamos el nombre interno a uno que no choque con palabras de Gradle
             from(files("gradle/build.versions.toml"))
         }
     }
 }
 
+// 📦 Inclusión estricta de tus dos módulos del proyecto KMP
 include(":composeApp")
 include(":server")

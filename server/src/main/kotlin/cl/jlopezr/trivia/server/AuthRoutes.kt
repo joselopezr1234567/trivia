@@ -5,12 +5,16 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.sql.insert
 
 fun Route.registerAuthRoutes(userRepository: UserRepository) {
 
+    // ==========================================
+    // 👤 CAPA DE AUTENTICACIÓN Y USUARIOS (/auth)
+    // ==========================================
     route("/auth") {
 
-        // 📝 ENDPOINT: REGISTRO
+        // 📝 ENDPOINT: REGISTRO DE USUARIOS
         post("/register") {
             try {
                 val request = call.receive<UserRegisterRequest>()
@@ -21,12 +25,7 @@ fun Route.registerAuthRoutes(userRepository: UserRepository) {
 
                 val profile = userRepository.registerUser(request)
                 if (profile != null) {
-                    // Generamos el token usando el ID asignado por Postgres
                     val token = JwtConfig.generateToken(profile.id)
-
-                    // Ya no generamos un random extra aquí. El repositorio ya imprimió
-                    // en la consola el código real que se guardó en la base de datos.
-
                     call.respond(HttpStatusCode.Created, profile.copy(token = token))
                 } else {
                     call.respond(HttpStatusCode.BadRequest, mapOf("error" to "El nombre de usuario o el correo ya existen"))
@@ -57,7 +56,7 @@ fun Route.registerAuthRoutes(userRepository: UserRepository) {
             }
         }
 
-        // 📲 ENDPOINT: VERIFICACIÓN DEL CÓDIGO HARDCOREADO
+        // 📲 ENDPOINT: VERIFICACIÓN DE CÓDIGO
         post("/verify") {
             try {
                 val request = call.receive<VerifyCodeRequest>()
@@ -74,6 +73,79 @@ fun Route.registerAuthRoutes(userRepository: UserRepository) {
                 }
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error interno: ${e.localizedMessage}"))
+            }
+        }
+
+        // 💾 ENDPOINT: GUARDAR RESPUESTA DEL USUARIO EN HISTORIAL
+        post("/answer") {
+            try {
+                @kotlinx.serialization.Serializable
+                data class AnswerRequest(val userId: Int, val questionId: Int, val isCorrect: Boolean)
+
+                val request = call.receive<AnswerRequest>()
+
+                DatabaseFactory.dbQuery {
+                    UserAnswersTable.insert {
+                        it[userId] = request.userId
+                        it[questionId] = request.questionId
+                        it[isCorrect] = request.isCorrect
+                    }
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("status" to "success", "message" to "Respuesta guardada en el historial"))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.localizedMessage))
+            }
+        }
+    }
+
+
+    // ==========================================
+    // 🧠 CAPA DE TRIVIA E IA (/trivia)
+    // ==========================================
+    route("/trivia") {
+
+        // 🚀 ENDPOINT: GENERAR PREGUNTA CON IA Y GUARDAR EN POSTGRES
+        get("/generate") {
+            try {
+                val category = call.request.queryParameters["category"] ?: "general"
+                val userId = call.request.queryParameters["userId"]?.toIntOrNull()
+
+                if (userId == null) {
+                    return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "El parámetro 'userId' es obligatorio"))
+                }
+
+                val openAiService = OpenAiService()
+
+                // ✅ 1. Forzamos el nombre de tu función real 'generateQuestionFromAi'
+                // ✅ 2. Le asignamos explícitamente el tipo de dato QuestionResponse para evitar el bug del .copy()
+                val preguntaIA: QuestionResponse? = openAiService.generateQuestionFromAi(category)
+
+                if (preguntaIA == null) {
+                    return@get call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "No se pudo obtener una respuesta válida de OpenAI"))
+                }
+
+                var questionIdInserted = 0
+                DatabaseFactory.dbQuery {
+                    questionIdInserted = QuestionsTable.insert {
+                        it[QuestionsTable.category] = preguntaIA.category
+                        it[QuestionsTable.questionText] = preguntaIA.questionText
+                        it[QuestionsTable.optionA] = preguntaIA.optionA
+                        it[QuestionsTable.optionB] = preguntaIA.optionB
+                        it[QuestionsTable.optionC] = preguntaIA.optionC
+                        it[QuestionsTable.optionD] = preguntaIA.optionD
+
+                        // ✅ SOLUCIÓN: Extraemos el Char primitivo ('A', 'B', etc.) para que calce con la columna char()
+                        it[QuestionsTable.correctOption] = preguntaIA.correctOption.first()
+                    }[QuestionsTable.id]
+                }
+
+                // ✅ 4. Ahora el .copy() funcionará perfecto porque sabe que es tu Data Class
+                val respuestaFinal = preguntaIA.copy(id = questionIdInserted)
+                call.respond(HttpStatusCode.OK, respuestaFinal)
+
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al generar la trivia con IA: ${e.localizedMessage}"))
             }
         }
     }
