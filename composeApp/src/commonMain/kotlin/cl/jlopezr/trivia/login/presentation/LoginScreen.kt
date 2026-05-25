@@ -31,10 +31,11 @@ import myapplication.composeapp.generated.resources.btn_entrar
 import myapplication.composeapp.generated.resources.fondo
 import org.jetbrains.compose.resources.painterResource
 import kotlin.random.Random
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = viewModel<LoginViewModel> { LoginViewModel(authRepository = DummyAuthRepository()) },
+    viewModel: LoginViewModel = koinViewModel(),
     onNavigateToHome: () -> Unit,
     onNavigateToRegister: () -> Unit,
     onNavigateToForgotPassword: () -> Unit
@@ -253,9 +254,3 @@ fun ShootingStar() {
     }
 }
 
-class DummyAuthRepository : AuthRepository {
-    override suspend fun login(email: String, password: String): Result<Unit> {
-        kotlinx.coroutines.delay(2000)
-        return Result.success(Unit)
-    }
-}

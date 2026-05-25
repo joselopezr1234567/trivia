@@ -1,5 +1,9 @@
 package cl.jlopezr.trivia.forgotpassword.presentation
 
+
+
+// --- IMPORTACIONES NUEVAS ---
+// Nota: Si no usas el repositorio directamente en el VM (porque ya usas los UseCase), puedes borrar el import del repositorio.
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +13,7 @@ import cl.jlopezr.trivia.forgotpassword.domain.usecase.ResetPasswordUseCase
 import cl.jlopezr.trivia.forgotpassword.domain.usecase.ValidatePhoneUseCase
 import kotlinx.coroutines.launch
 
+// ----------------------------
 class ForgotPasswordViewModel(
     private val validatePhoneUseCase: ValidatePhoneUseCase,
     private val resetPasswordUseCase: ResetPasswordUseCase
