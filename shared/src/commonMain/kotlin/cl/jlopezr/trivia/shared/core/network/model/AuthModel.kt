@@ -1,9 +1,13 @@
 package cl.jlopezr.trivia.shared.core.network.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UserLoginRequest(val email: String, val password: String)
+data class UserLoginRequest(
+    @SerialName("email")
+    val email: String,
+    val password: String)
 
 @Serializable
 data class UserRegisterRequest(
