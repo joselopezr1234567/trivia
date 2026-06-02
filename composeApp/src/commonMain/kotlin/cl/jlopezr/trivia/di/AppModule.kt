@@ -1,6 +1,8 @@
 package cl.jlopezr.trivia.di
 
 import cl.jlopezr.trivia.login.presentation.LoginViewModel
+// ✅ Importamos el RegisterViewModel (Asegúrate de que la ruta sea correcta)
+import cl.jlopezr.trivia.registrer.presentation.RegisterViewModel
 import cl.jlopezr.trivia.shared.features.login.data.repository.AuthRepositoryImpl
 import cl.jlopezr.trivia.shared.features.login.domain.AuthRepository
 
@@ -12,22 +14,30 @@ import org.koin.core.module.dsl.viewModel
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
-
-
+import kotlinx.serialization.json.Json
 
 val appModule = module {
-    // 1. Cliente HTTP
+
+    // 1. Cliente HTTP (Configurado para ignorar claves desconocidas del JSON)
     single {
-        HttpClient() {
+        HttpClient {
             install(ContentNegotiation) {
-                json()
+                json(Json {
+                    ignoreUnknownKeys = true
+                    prettyPrint = true
+                })
             }
         }
     }
 
     // 2. Repositorio
+    // 'get()' inyectará automáticamente el HttpClient de arriba
     single<AuthRepository> { AuthRepositoryImpl(get()) }
 
-    // 3. ViewModel
-    viewModel<LoginViewModel> { LoginViewModel(get()) }
+    // 3. ViewModels
+    // 'get()' inyectará automáticamente el AuthRepository en ambos ViewModels
+    viewModel { LoginViewModel(get()) }
+
+    // ✅ REGISTRAMOS EL VIEWMODEL DE REGISTRO
+    viewModel { RegisterViewModel(get()) }
 }

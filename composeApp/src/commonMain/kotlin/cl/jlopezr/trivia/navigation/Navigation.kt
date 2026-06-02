@@ -19,7 +19,7 @@ import cl.jlopezr.trivia.home.domain.usecase.GetQuestionsUseCase
 import cl.jlopezr.trivia.home.presentation.HomeScreen
 import cl.jlopezr.trivia.home.presentation.HomeViewModel
 import cl.jlopezr.trivia.login.presentation.LoginScreen
-import cl.jlopezr.trivia.register.presentation.RegisterScreen
+import cl.jlopezr.trivia.registrer.presentation.RegisterScreen
 import cl.jlopezr.trivia.game.presentation.GameScreen // Asegúrate de crear este paquete
 
 @Composable

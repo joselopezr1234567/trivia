@@ -1,27 +1,39 @@
 package cl.jlopezr.server
 
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.install
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import io.ktor.http.*
-import kotlinx.serialization.SerialName
-// Importaciones de la Base de Datos corregidas
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq // Necesario para 'eq'
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.javatime.timestamp // ✅ Importación necesaria para fechas
+import java.time.Instant // ✅ Importación para la hora actual
 
-// 1. Mapeo de la tabla (Ya confirmamos que existe en trivia_db)
+// 1. Mapeo de la tabla corregido
 object UsersTable : Table("users") {
     val id = integer("id").autoIncrement()
+    val username = varchar("username", 100)
     val email = varchar("email", 100).uniqueIndex()
     val password = varchar("password", 100)
+    val phone = varchar("phone", 20)
+
+    // ✅ CAMBIO: Ahora es tipo timestamp para que Postgres no proteste
+    val createdAt = timestamp("created_at")
+
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -37,14 +49,21 @@ data class LoginResponse(
     @SerialName("message") val message: String
 )
 
+@Serializable
+data class UserRegisterRequest(
+    val username: String,
+    val email: String,
+    val password: String,
+    val phone: String
+)
+
 fun main() {
-    // 2. CONEXIÓN A LA BASE DE DATOS TRIVIA_DB
+    // 2. CONEXIÓN A LA BASE DE DATOS
     Database.connect(
-        // Cambiado de 'postgres' a 'trivia_db' ✅
         url = "jdbc:postgresql://localhost:5432/trivia_db",
         driver = "org.postgresql.Driver",
         user = "macbook",
-        password = "" // Postgres.app en local no suele pedir clave
+        password = ""
     )
 
     embeddedServer(Netty, port = 8080) {
@@ -57,18 +76,47 @@ fun main() {
 
         routing {
             route("/auth") {
+                // ENDPOINT LOGIN
                 post("/login") {
                     try {
                         val credentials = call.receive<LoginRequest>()
-                        println("Intentando login en trivia_db para: ${credentials.email}")
-
+                        println("Intentando login para: ${credentials.email}")
                         if (checkInDatabase(credentials)) {
                             call.respond(HttpStatusCode.OK, LoginResponse(true, "Acceso concedido"))
                         } else {
                             call.respond(HttpStatusCode.Unauthorized, LoginResponse(false, "Credenciales incorrectas"))
                         }
                     } catch (e: Exception) {
-                        println("Error en login: ${e.message}")
+                        call.respond(HttpStatusCode.BadRequest, LoginResponse(false, "Error: ${e.message}"))
+                    }
+                }
+
+                // ENDPOINT REGISTER
+                post("/register") {
+                    try {
+                        val signup = call.receive<UserRegisterRequest>()
+
+                        val alreadyExists = transaction {
+                            UsersTable.selectAll().where { UsersTable.email eq signup.email }.count() > 0
+                        }
+
+                        if (alreadyExists) {
+                            call.respond(HttpStatusCode.Conflict, LoginResponse(false, "El correo ya está registrado"))
+                        } else {
+                            transaction {
+                                UsersTable.insert {
+                                    it[username] = signup.username
+                                    it[email] = signup.email
+                                    it[password] = signup.password
+                                    it[phone] = signup.phone
+                                    // ✅ CAMBIO: Usamos Instant.now() para enviar una FECHA y no un número
+                                    it[createdAt] = Instant.now()
+                                }
+                            }
+                            call.respond(HttpStatusCode.Created, LoginResponse(true, "Usuario creado exitosamente"))
+                        }
+                    } catch (e: Exception) {
+                        println("Error en registro: ${e.message}")
                         call.respond(HttpStatusCode.BadRequest, LoginResponse(false, "Error: ${e.message}"))
                     }
                 }
@@ -77,10 +125,8 @@ fun main() {
     }.start(wait = true)
 }
 
-// 4. FUNCIÓN QUE BUSCA EN TU TABLA REAL
 fun checkInDatabase(credentials: LoginRequest): Boolean {
     return transaction {
-        // Usamos selectAll().where para versiones recientes de Exposed
         UsersTable.selectAll()
             .where { (UsersTable.email eq credentials.email) and (UsersTable.password eq credentials.password) }
             .count() > 0

@@ -2,27 +2,56 @@ package cl.jlopezr.trivia.registrer.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cl.jlopezr.trivia.core.network.model.UserRegisterRequest
+import cl.jlopezr.trivia.shared.features.login.domain.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import cl.jlopezr.trivia.registrer.presentation.RegisterUiState
 
-class RegisterViewModel: ViewModel() {
+
+
+// ✅ Agregamos el constructor con el repositorio
+class RegisterViewModel(
+    private val repository: AuthRepository
+) : ViewModel() {
+
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun onRegister(email: String, pass: String, confirmPass: String) {
-        if (pass != confirmPass) {
-            _uiState.value = _uiState.value.copy(error = "Las contraseñas no coinciden")
-            return
-        }
+    // ✅ Cambiamos el nombre a 'register' y agregamos los campos faltantes
+    fun register(fullName: String, email: String, phone: String, password: String) {
+
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            _uiState.value = _uiState.value.copy(isRegistered = true)
+            // 1. Mostrar estado de carga
+            _uiState.update { it.copy(isLoading = true, error = null) }
+
+            // 2. Preparar los datos para el servidor
+            val request = UserRegisterRequest(
+                username = fullName,
+                email = email,
+                password = password,
+                phone = phone
+            )
+
+            // 3. Llamada real al repositorio (conecta con Ktor)
+            val result = repository.register(request)
+
+            result.onSuccess {
+                println("✅ Registro exitoso en el servidor")
+                _uiState.update { it.copy(
+                    isLoading = false,
+                    isSuccess = true,
+                    isRegistered = true
+                )}
+            }.onFailure { e ->
+                println("❌ Error en el registro: ${e.message}")
+                _uiState.update { it.copy(
+                    isLoading = false,
+                    error = e.message ?: "Error desconocido"
+                )}
+            }
         }
-
-
-
     }
-
-
 }

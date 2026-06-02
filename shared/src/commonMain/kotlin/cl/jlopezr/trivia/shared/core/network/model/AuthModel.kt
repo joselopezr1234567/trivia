@@ -9,12 +9,14 @@ data class UserLoginRequest(
     val email: String,
     val password: String)
 
+
+
 @Serializable
 data class UserRegisterRequest(
     val username: String,
     val email: String,
     val password: String,
-    val phone: String? = null
+    val phone: String
 )
 
 @Serializable

@@ -28,6 +28,7 @@ kotlin {
             implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")
             implementation("io.insert-koin:koin-core:4.0.0")
             implementation("io.insert-koin:koin-compose:4.0.0")
+            implementation("io.insert-koin:koin-compose-viewmodel:4.0.0")
             implementation("io.ktor:ktor-client-core:$ktorVersion")
             implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
             implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
@@ -90,7 +91,6 @@ android {
 }
 dependencies {
     implementation(project(":shared"))
-
 
 
 
