@@ -32,7 +32,10 @@ data class LoginRequest(
 )
 
 @Serializable
-data class LoginResponse(val success: Boolean, val message: String)
+data class LoginResponse(
+    @SerialName("success") val success: Boolean,
+    @SerialName("message") val message: String
+)
 
 fun main() {
     // 2. CONEXIÓN A LA BASE DE DATOS TRIVIA_DB

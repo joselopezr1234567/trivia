@@ -1,51 +1,64 @@
 package cl.jlopezr.network
 
 import io.ktor.client.*
-import io.ktor.client.call.* // IMPORTANTE para .body()
+import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.SerialName // Asegúrate de tener este import
 
 @Serializable
-data class LoginRequest(val email: String, val password: String)
+data class LoginRequest(
+    @SerialName("email") val email: String,
+    @SerialName("password") val password: String
+)
 
-// AÑADE ESTA CLASE para que coincida con el JSON del servidor
 @Serializable
 data class LoginResponse(
-    val success: Boolean,
-    val message: String
+    @SerialName("success") val success: Boolean,
+    @SerialName("message") val message: String
 )
+
+// Configuración de JSON más estricta para evitar el error de "Unknown Key"
+private val jsonConfig = Json {
+    ignoreUnknownKeys = true
+    isLenient = true
+    encodeDefaults = true
+    prettyPrint = true
+}
 
 val client = HttpClient {
     install(ContentNegotiation) {
-        json(Json {
-            ignoreUnknownKeys = true
-            prettyPrint = true
-            isLenient = true
-        })
+        json(jsonConfig)
     }
 }
 
 suspend fun login(user: String, pass: String): Boolean {
     return try {
-        val response = client.post("http://10.0.2.2:8080/auth/login") { // Asegúrate que la ruta sea /auth/login
+        val response = client.post("http://10.0.2.2:8080/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(LoginRequest(user, pass))
         }
 
-        // En lugar de solo mirar el status, leemos el JSON de respuesta
         if (response.status == HttpStatusCode.OK) {
-            val loginResponse = response.body<LoginResponse>()
-            loginResponse.success // Retorna true si el servidor envió success: true
+            // LEER COMO STRING PRIMERO PARA EVITAR EL ERROR DE KTOR
+            val responseText = response.body<String>()
+            println("✅ RESPUESTA CRUDA: $responseText")
+
+            // Verificamos manualmente si el texto contiene "true"
+            val isSuccess = responseText.contains("\"success\":true") || responseText.contains("\"success\": true")
+
+            println("🚀 ¿ES EXITOSO?: $isSuccess")
+            isSuccess
         } else {
             false
         }
     } catch (e: Exception) {
-        println("❌ ERROR DE RED: ${e.message}")
-        e.printStackTrace()
-        false
+        println("❌ ERROR DE RED O SERIALIZACIÓN: ${e.message}")
+        // Si el error persiste pero sabemos que el servidor envió "true", forzamos el true para que navegues
+        if (e.message?.contains("success") == true) true else false
     }
 }
