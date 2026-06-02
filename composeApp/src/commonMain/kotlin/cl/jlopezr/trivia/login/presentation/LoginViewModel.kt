@@ -53,9 +53,10 @@ class LoginViewModel(
             // Llamada al repositorio (Render o Mock)
             authRepository.login(currentEmail, currentPassword)
                 .onSuccess {
+                    println("DEBUG: Login exitoso en el repositorio")
                     _state.update {
                         it.copy(
-                            isLoading = false, // Corregido: isLoading
+                            isLoading = false,
                             isLoginSuccess = true
                         )
                     }
