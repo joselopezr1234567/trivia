@@ -1,17 +1,13 @@
-package cl.jlopezr.trivia.shared.features.login.domain
+package cl.jlopezr.trivia.shared.features.login.data.repository
 
 import cl.jlopezr.trivia.core.network.model.UserProfileResponse
 import cl.jlopezr.trivia.core.network.model.UserLoginRequest // ✅ Asegúrate de tener este import
 import cl.jlopezr.trivia.core.network.model.UserRegisterRequest
-import cl.jlopezr.trivia.login.domain.AuthRepository
-import io.ktor.client.*
+import cl.jlopezr.trivia.shared.features.login.domain.AuthRepository
 import io.ktor.client.call.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.* // ✅ Necesario para usar HttpResponse
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import kotlinx.serialization.json.Json
 import io.ktor.client.HttpClient
 
 class AuthRepositoryImpl(private val httpClient: HttpClient) : AuthRepository {

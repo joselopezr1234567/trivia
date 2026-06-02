@@ -27,26 +27,26 @@ fun main() {
         }
 
         routing {
-            // Ruta de prueba
-            get("/") {
-                call.respondText("Servidor de Login funcionando!")
-            }
+            // Agrupa bajo /auth para mantener orden
+            route("/auth") {
 
-            // Ruta de login
-            post("/login") {
-                val rawBody = call.receiveText() // Obtiene el JSON como texto plano
-                println("JSON recibido: $rawBody") // Míralo en la consola de tu terminal
+                post("/login") {
+                    val credentials = call.receive<LoginRequest>() // Ktor ya hace el decode por ti
 
-                // Si esto falla, el problema es el formato del JSON
-                val credentials = Json.decodeFromString<LoginRequest>(rawBody)
+                    if (checkInDatabase(credentials)) {
+                        call.respond(LoginResponse(true, "Acceso concedido"))
+                    } else {
+                        call.respond(LoginResponse(false, "Credenciales incorrectas"))
+                    }
+                }
 
-                if (checkInDatabase(credentials)) {
-                    call.respond(LoginResponse(true, "Acceso concedido"))
-                } else {
-                    call.respond(LoginResponse(false, "Credenciales incorrectas"))
+                post("/register") {
+                    // Aquí irá tu lógica de registro más adelante
+                    call.respond(LoginResponse(true, "Registro pendiente de implementar"))
                 }
             }
         }
+
     }.start(wait = true)
 }
 

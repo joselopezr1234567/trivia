@@ -33,8 +33,9 @@ dependencyResolutionManagement {
     }
 }
 
-// 📦 Inclusión estricta de tus dos módulos del proyecto KMP
 
+// 📦 Inclusión estricta de tus dos módulos del proyecto KMP
+rootProject.name = "MyApplication"
 include(":composeApp")
 include(":shared")
 include(":server")

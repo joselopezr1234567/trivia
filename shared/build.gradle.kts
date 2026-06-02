@@ -1,46 +1,33 @@
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
-    // Aplicamos el plugin de serialización de forma segura
+    kotlin("multiplatform")
     kotlin("plugin.serialization")
+    id("com.android.library")
 }
 
 kotlin {
-    // 1. Registro del target de Android con la nueva sintaxis 'compilerOptions'
+    jvmToolchain(17)
     androidTarget {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
+        // Esto es suficiente para Kotlin, pero necesitamos que Android también lo sepa
     }
+    iosX64(); iosArm64(); iosSimulatorArm64()
 
-    // 2. Registro de targets de iOS
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-
-    // 3. Configuración de dependencias
     sourceSets {
         commonMain.dependencies {
-            // Asegúrate de tener esta librería en tu libs.versions.toml
-            implementation(libs.kotlinx.serialization.json)
-            val ktorVersion = "2.3.11" // O usa una versión definida en tu TOML
+            val ktorVersion = "3.1.0"
             implementation("io.ktor:ktor-client-core:$ktorVersion")
             implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
             implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-        }
-        androidMain.dependencies {
-            implementation(libs.androidx.core.ktx)
+            implementation("io.ktor:ktor-client-cio:$ktorVersion") // ¡Necesitas el motor!
         }
     }
 }
 
 android {
     namespace = "cl.jlopezr.trivia.shared"
-    compileSdk = 36
-    defaultConfig {
-        minSdk = 24
-    }
-    // Configuración de compatibilidad obligatoria
+    compileSdk = 35 // Cambiado a 35 (más estable que 36)
+    defaultConfig { minSdk = 24 }
+
+    // ESTO ES LO QUE HACE QUE LAS DEPENDENCIAS NO SEAN ROJAS
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

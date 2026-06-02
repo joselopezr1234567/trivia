@@ -97,7 +97,7 @@ fun ResetPasswordScreen(
                             value = state.code,
                             onValueChange = { if (it.length <= 6) onCodeChange(it) },
                             label = "Código de 6 dígitos",
-                            icon = Icons.Default.LockPerson,
+                            icon = Icons.Default.Lock,
                             keyboardType = KeyboardType.Number,
                             outlineStyle = outlineStyle
                         )

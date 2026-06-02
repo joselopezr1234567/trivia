@@ -26,6 +26,7 @@ import myapplication.composeapp.generated.resources.btn_entrar
 import myapplication.composeapp.generated.resources.fondo
 import org.jetbrains.compose.resources.painterResource
 import kotlin.random.Random
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Contenedor principal que centraliza el fondo y el efecto visual de estrellas.

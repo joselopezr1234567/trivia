@@ -34,7 +34,7 @@ import myapplication.composeapp.generated.resources.fondo
 import org.jetbrains.compose.resources.painterResource
 import kotlin.math.*
 import kotlin.random.Random
-import kotlin.time.Clock
+
 
 
 // --- Modelo para las Estrellas Fugaces ---

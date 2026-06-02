@@ -2,12 +2,14 @@ package cl.jlopezr.trivia.login.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cl.jlopezr.trivia.login.domain.AuthRepository
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+import cl.jlopezr.trivia.shared.features.login.domain.AuthRepository
 
 
 

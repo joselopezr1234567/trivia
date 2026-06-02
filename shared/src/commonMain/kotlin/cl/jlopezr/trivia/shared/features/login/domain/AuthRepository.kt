@@ -1,7 +1,6 @@
-package cl.jlopezr.trivia.login.domain
+package cl.jlopezr.trivia.shared.features.login.domain
 
 import cl.jlopezr.trivia.core.network.model.UserRegisterRequest
-import cl.jlopezr.trivia.shared.core.network.model.UserProfileResponse
 
 interface AuthRepository {
     suspend fun login(email: String, password: String): Result<cl.jlopezr.trivia.core.network.model.UserProfileResponse>

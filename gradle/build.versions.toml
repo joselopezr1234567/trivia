@@ -1,6 +1,13 @@
+
 [versions]
+androidx-navigation = "2.9.2"
 
 [libraries]
+# Se eliminó el duplicado y se dejó solo la versión correcta
+navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "androidx-navigation" }
 
 [plugins]
-
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version = "2.1.0" }
+androidApplication = { id = "com.android.application", version = "8.2.0" }
+composeMultiplatform = { id = "org.jetbrains.compose", version = "1.7.0" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.1.0" }

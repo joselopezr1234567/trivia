@@ -24,14 +24,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import cl.jlopezr.trivia.login.domain.AuthRepository
 import myapplication.composeapp.generated.resources.Res
 import myapplication.composeapp.generated.resources.btn_entrar
 import myapplication.composeapp.generated.resources.fondo
 import org.jetbrains.compose.resources.painterResource
-import kotlin.random.Random
 import org.koin.androidx.compose.koinViewModel
+import kotlin.random.Random
 
 @Composable
 fun LoginScreen(
