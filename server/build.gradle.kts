@@ -1,12 +1,10 @@
 plugins {
-    // Aplicamos los plugins necesarios
-    kotlin("jvm") version "1.8.0"
-    kotlin("plugin.serialization") version "2.1.0"
-    id("io.ktor.plugin") version "3.1.0"
+    kotlin("jvm")
+    kotlin("plugin.serialization")
+    id("io.ktor.plugin") // La versión la toma del raíz
     application
 }
 
-// Configuración para asegurar que el compilador sea compatible con tu entorno
 kotlin {
     jvmToolchain(17)
 }
@@ -16,31 +14,33 @@ repositories {
 }
 
 dependencies {
-    val ktorVersion = "3.1.0"
+    val ktorVersion = "2.3.12"
 
-    // Ktor Server
+    // --- KTOR SERVER (Version 2.x) ---
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
 
-    // Serialización
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    // --- KTOR CLIENT (Para OpenAI - Compatible 100%) ---
+    implementation("io.ktor:ktor-client-core-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
 
-    // Exposed (Base de datos)
-    val exposedVersion = "0.56.0"
+    // --- OPENAI ---
+    implementation("com.aallam.openai:openai-client:3.8.2")
+
+    // --- BASE DE DATOS ---
+    val exposedVersion = "0.50.0"
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
-    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.50.0")
-    // Dentro de la sección dependencies { ... }
-    implementation("org.jetbrains.exposed:exposed-java-time:0.50.0")
-
-    // Driver PostgreSQL
+    implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
     implementation("org.postgresql:postgresql:42.7.4")
 
-    // Logs (útil para ver qué está pasando en el servidor)
-    implementation("ch.qos.logback:logback-classic:1.5.6")
+    // --- LOGS ---
+    implementation("ch.qos.logback:logback-classic:1.4.14")
 }
 
 application {

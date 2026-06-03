@@ -1,7 +1,13 @@
 package cl.jlopezr.server
 
+import com.aallam.openai.api.chat.ChatCompletionRequest
+import com.aallam.openai.api.chat.ChatMessage
+import com.aallam.openai.api.chat.ChatRole
+import com.aallam.openai.api.model.ModelId
+import com.aallam.openai.client.OpenAI
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -57,7 +63,16 @@ data class UserRegisterRequest(
     val phone: String
 )
 
+@Serializable
+data class TriviaRequest(val topic: String)
+
 fun main() {
+    // Busca la clave en el sistema, si no la encuentra lanza un error claro
+    val apiKey = System.getenv("OPENAI_API_KEY")
+        ?: throw Exception("ERROR: No se encontró la variable de entorno OPENAI_API_KEY")
+
+    val openAI = OpenAI(apiKey)
+
     // 2. CONEXIÓN A LA BASE DE DATOS
     Database.connect(
         url = "jdbc:postgresql://localhost:5432/trivia_db",
@@ -121,7 +136,38 @@ fun main() {
                     }
                 }
             }
+            route("/trivia") {
+                post("/generate") {
+                    try {
+                        val request = call.receive<TriviaRequest>()
+
+                        val chatCompletion = openAI.chatCompletion(
+                            ChatCompletionRequest(
+                                model = ModelId("gpt-3.5-turbo"),
+                                messages = listOf(
+                                    ChatMessage(
+                                        role = ChatRole.System,
+                                        content = "Eres un generador de trivias. Responde solo en formato JSON: {\"question\": \"...\", \"options\": [\"...\", \"...\", \"...\", \"...\"], \"correctIndex\": 0}"
+                                    ),
+                                    ChatMessage(
+                                        role = ChatRole.User,
+                                        content = "Genera una pregunta sobre: ${request.topic}"
+                                    )
+                                )
+                            )
+                        )
+
+                        val result = chatCompletion.choices.first().message.content
+                        call.respond(HttpStatusCode.OK, result ?: "{}")
+
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, "Error IA: ${e.message}")
+                    }
+                }
+            }
         }
+
+
     }.start(wait = true)
 }
 
@@ -132,3 +178,4 @@ fun checkInDatabase(credentials: LoginRequest): Boolean {
             .count() > 0
     }
 }
+
