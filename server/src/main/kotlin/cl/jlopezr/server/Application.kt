@@ -28,6 +28,7 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.javatime.timestamp // ✅ Importación necesaria para fechas
 import java.time.Instant // ✅ Importación para la hora actual
+import cl.jlopezr.trivia.shared.core.network.model.*
 
 // 1. Mapeo de la tabla corregido
 object UsersTable : Table("users") {
@@ -43,11 +44,7 @@ object UsersTable : Table("users") {
     override val primaryKey = PrimaryKey(id)
 }
 
-@Serializable
-data class LoginRequest(
-    @SerialName("email") val email: String,
-    val password: String
-)
+
 
 @Serializable
 data class LoginResponse(
@@ -55,16 +52,7 @@ data class LoginResponse(
     @SerialName("message") val message: String
 )
 
-@Serializable
-data class UserRegisterRequest(
-    val username: String,
-    val email: String,
-    val password: String,
-    val phone: String
-)
 
-@Serializable
-data class TriviaRequest(val topic: String)
 
 fun main() {
     // Busca la clave en el sistema, si no la encuentra lanza un error claro
@@ -94,7 +82,8 @@ fun main() {
                 // ENDPOINT LOGIN
                 post("/login") {
                     try {
-                        val credentials = call.receive<LoginRequest>()
+                        // Cambia LoginRequest por UserLoginRequest
+                        val credentials = call.receive<UserLoginRequest>()
                         println("Intentando login para: ${credentials.email}")
                         if (checkInDatabase(credentials)) {
                             call.respond(HttpStatusCode.OK, LoginResponse(true, "Acceso concedido"))
@@ -147,7 +136,7 @@ fun main() {
                                 messages = listOf(
                                     ChatMessage(
                                         role = ChatRole.System,
-                                        content = "Eres un generador de trivias. Responde solo en formato JSON: {\"question\": \"...\", \"options\": [\"...\", \"...\", \"...\", \"...\"], \"correctIndex\": 0}"
+                                        content = "Eres un generador de trivias. Responde ÚNICAMENTE el objeto JSON puro, sin bloques de código markdown ni texto adicional. Formato: {\"question\": \"...\", \"options\": [\"...\", \"...\", \"...\", \"...\"], \"correctIndex\": 0}"
                                     ),
                                     ChatMessage(
                                         role = ChatRole.User,
@@ -157,11 +146,24 @@ fun main() {
                             )
                         )
 
-                        val result = chatCompletion.choices.first().message.content
-                        call.respond(HttpStatusCode.OK, result ?: "{}")
+                        val rawResult = chatCompletion.choices.first().message.content ?: "{}"
+
+                        // 1. Limpieza por si OpenAI incluye ```json ... ```
+                        val cleanJson = rawResult.trim()
+                            .removePrefix("```json")
+                            .removeSuffix("```")
+                            .trim()
+
+                        // 2. PARSEO: Convertimos el String de la IA al objeto TriviaResponse del shared
+                        // Esto asegura que Ktor envíe el Header "Content-Type: application/json"
+                        val triviaResponse = Json.decodeFromString<TriviaResponse>(cleanJson)
+
+                        // 3. RESPONDEMOS EL OBJETOS (No el string)
+                        call.respond(HttpStatusCode.OK, triviaResponse)
 
                     } catch (e: Exception) {
-                        call.respond(HttpStatusCode.InternalServerError, "Error IA: ${e.message}")
+                        println("Error procesando IA: ${e.message}")
+                        call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error IA: ${e.message}"))
                     }
                 }
             }
@@ -171,7 +173,7 @@ fun main() {
     }.start(wait = true)
 }
 
-fun checkInDatabase(credentials: LoginRequest): Boolean {
+fun checkInDatabase(credentials: UserLoginRequest): Boolean {
     return transaction {
         UsersTable.selectAll()
             .where { (UsersTable.email eq credentials.email) and (UsersTable.password eq credentials.password) }

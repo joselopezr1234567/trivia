@@ -13,7 +13,8 @@
         <!-- CORRECTO: Usando el nombre completo según tu namespace -->
         <activity
             android:name="cl.jlopezr.trivia.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:usesCleartextTraffic="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

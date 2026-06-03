@@ -9,6 +9,8 @@ kotlin {
     androidTarget {
         // Esto es suficiente para Kotlin, pero necesitamos que Android también lo sepa
     }
+    jvm()
+
     iosX64(); iosArm64(); iosSimulatorArm64()
 
     sourceSets {

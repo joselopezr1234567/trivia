@@ -7,9 +7,8 @@ import kotlinx.serialization.Serializable
 data class UserLoginRequest(
     @SerialName("email")
     val email: String,
-    val password: String)
-
-
+    val password: String
+)
 
 @Serializable
 data class UserRegisterRequest(
@@ -29,4 +28,15 @@ data class UserProfileResponse(
     val currentLevel: Int = 1,
     val currentExperience: Int = 0,
     val token: String = ""
+)
+
+// --- AGREGA ESTOS PARA LA TRIVIA ---
+@Serializable
+data class TriviaRequest(val topic: String)
+
+@Serializable
+data class TriviaResponse(
+    val question: String,
+    val options: List<String>,
+    val correctIndex: Int
 )

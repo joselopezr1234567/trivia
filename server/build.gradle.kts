@@ -16,13 +16,16 @@ repositories {
 dependencies {
     val ktorVersion = "2.3.12"
 
-    // --- KTOR SERVER (Version 2.x) ---
+    implementation(project(":shared"))
+
+    // --- KTOR SERVER ---
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
 
-    // --- KTOR CLIENT (Para OpenAI - Compatible 100%) ---
+    // --- KTOR CLIENT (FORZADO) ---
+    // Cambiamos 'serialization' por 'kotlinx-json' también en el cliente
     implementation("io.ktor:ktor-client-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-client-cio-jvm:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation-jvm:$ktorVersion")
@@ -42,6 +45,14 @@ dependencies {
     // --- LOGS ---
     implementation("ch.qos.logback:logback-classic:1.4.14")
 }
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "io.ktor") {
+            useVersion("2.3.12")
+        }
+    }
+}
+
 
 application {
     mainClass.set("cl.jlopezr.server.ApplicationKt")
