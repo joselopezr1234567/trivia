@@ -1,4 +1,4 @@
-package cl.jlopezr.trivia.core.data
+package cl.jlopezr.trivia.shared.core.data
 
 /**
  * Objeto Singleton para persistir los datos durante la sesión.

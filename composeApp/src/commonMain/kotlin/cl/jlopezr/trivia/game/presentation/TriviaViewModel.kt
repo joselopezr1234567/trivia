@@ -3,16 +3,18 @@ package cl.jlopezr.trivia.game.presentation
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel // IMPORTANTE
-import androidx.lifecycle.viewModelScope // IMPORTANTE
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import cl.jlopezr.trivia.shared.features.game.domain.repository.TriviaRepository
 import cl.jlopezr.trivia.shared.core.network.model.TriviaResponse
 import cl.jlopezr.trivia.shared.core.network.model.TriviaRequest
+import cl.jlopezr.trivia.shared.core.data.ProgressStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import cl.jlopezr.trivia.shared.features.user.data.UserRepository
 
 sealed interface TriviaUiState {
     object Loading : TriviaUiState
@@ -20,43 +22,37 @@ sealed interface TriviaUiState {
     data class Error(val message: String) : TriviaUiState
 }
 
-// Definimos los tipos de feedback visual
 enum class FeedbackType { CORRECTO, INCORRECTO, SUBIO_NIVEL }
 
 class TriviaViewModel(
-    private val repository: TriviaRepository
-) : ViewModel() { // Ahora hereda de ViewModel correctamente
+    private val repository: TriviaRepository,
+    private val userRepository: UserRepository // 🔥 AGREGADO AQUÍ: Ahora el ViewModel conoce el repositorio de usuario
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<TriviaUiState>(TriviaUiState.Loading)
     val uiState: StateFlow<TriviaUiState> = _uiState.asStateFlow()
 
-    // --- ESTADOS PARA ANIMACIÓN ---
     var showFeedback by mutableStateOf<FeedbackType?>(null)
         private set
 
-    // --- LÓGICA DE JUEGO ---
     private val askedQuestions = mutableListOf<String>()
 
     var consecutiveCorrect by mutableStateOf(0)
         private set
 
-    var totalScore by mutableStateOf(0)
+    var totalScore by mutableStateOf(ProgressStorage.totalScore)
         private set
 
-    var currentLevel by mutableStateOf(1)
+    var currentLevel by mutableStateOf(ProgressStorage.currentLevel)
         private set
 
-
-    /**
-     * Carga una nueva pregunta desde el repositorio.
-     */
     fun loadQuestion(category: String) {
         viewModelScope.launch {
             _uiState.value = TriviaUiState.Loading
             try {
                 val request = TriviaRequest(
                     category,
-                    currentLevel.toString(), // <--- CAMBIO: Agregamos .toString()
+                    currentLevel.toString(),
                     askedQuestions.toList()
                 )
 
@@ -74,9 +70,6 @@ class TriviaViewModel(
         }
     }
 
-    /**
-     * Procesa la respuesta con ANIMACIONES y PERSISTENCIA.
-     */
     fun processAnswer(
         isCorrect: Boolean,
         category: String,
@@ -84,16 +77,14 @@ class TriviaViewModel(
     ) {
         viewModelScope.launch {
             if (isCorrect) {
-                // 1. Lógica de puntos
                 val pointsToAdd = when {
-                    currentLevel <= 2 -> 1      // Niveles 1-2: 1 punto
-                    currentLevel <= 5 -> 2      // Niveles 3-5: 2 puntos
-                    else -> 3                   // Nivel 6+: 3 puntos
+                    currentLevel <= 2 -> 1
+                    currentLevel <= 5 -> 2
+                    else -> 3
                 }
                 totalScore += pointsToAdd
                 consecutiveCorrect += 1
 
-                // 2. Determinar si es acierto normal o subida de nivel
                 if (consecutiveCorrect >= 3) {
                     upgradeLevel()
                     consecutiveCorrect = 0
@@ -102,41 +93,44 @@ class TriviaViewModel(
                     showFeedback = FeedbackType.CORRECTO
                 }
 
-                // 3. Persistencia
                 saveProgress()
 
-                // 4. Esperar a que termine la animación (2 segundos)
                 delay(2000)
                 showFeedback = null
-
-                // 5. Cargar siguiente pregunta
                 loadQuestion(category)
 
             } else {
-                // SE EQUIVOCÓ
                 showFeedback = FeedbackType.INCORRECTO
-
-                // Esperar para mostrar el error
                 delay(2000)
                 showFeedback = null
-
-                saveProgress() // Guardar antes de salir
+                saveProgress()
                 onGameOver()
             }
         }
     }
 
     private fun upgradeLevel() {
-        currentLevel += 1 // Simplemente sumamos 1 al nivel actual
+        currentLevel += 1
     }
 
-    // En TriviaViewModel.kt
+    /**
+     * Sincroniza localmente y envía a la base de datos SQL.
+     */
     private fun saveProgress() {
-        // Guardamos en el objeto compartido
-        cl.jlopezr.trivia.core.data.ProgressStorage.totalScore = totalScore
-        cl.jlopezr.trivia.core.data.ProgressStorage.currentLevel = currentLevel
+        // 1. Guardar en memoria local (ProgressStorage)
+        ProgressStorage.totalScore = totalScore
+        ProgressStorage.currentLevel = currentLevel
 
-        println("PROGRESO GUARDADO EN STORAGE: Nivel $currentLevel - Puntos $totalScore")
+        // 2. Guardar en la nube (SQL)
+        viewModelScope.launch {
+            val userId = "id-del-usuario-actual" // Esto debería venir de tu sesión real
+
+            userRepository.updateRemoteProgress(
+                email = userId, // <--- Cambiamos 'userId' por 'email'
+                points = totalScore,
+                level = currentLevel
+            )
+        }
     }
 
     fun saveFinalScore() {

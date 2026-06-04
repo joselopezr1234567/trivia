@@ -23,6 +23,7 @@ import cl.jlopezr.trivia.registrer.presentation.RegisterScreen
 import cl.jlopezr.trivia.game.presentation.GameScreen
 import cl.jlopezr.trivia.game.presentation.TriviaViewModel
 import cl.jlopezr.trivia.shared.features.game.domain.repository.TriviaRepository
+import cl.jlopezr.trivia.shared.features.user.data.UserRepository
 
 @Composable
 fun AppNavigation() {
@@ -107,27 +108,26 @@ fun AppNavigation() {
             RegisterScreen(onNavigateToLogin = { navController.popBackStack() })
         }
 
-        // 5. HOME (Pantalla Principal con Categorías y Puntos)
         composable("home") {
             val repository = TriviaRepositoryImpl()
             val getQuestionsUseCase = GetQuestionsUseCase(repository)
+            // Instanciamos el repositorio de usuario para la sincronización SQL
+            val userRepository = cl.jlopezr.trivia.shared.features.user.data.UserRepository()
 
             val homeViewModel = viewModel<HomeViewModel> {
-                HomeViewModel(getQuestionsUseCase)
+                HomeViewModel(getQuestionsUseCase, userRepository)
             }
 
             // 🔥 REFRESCAR PROGRESO AL VOLVER:
-            // Cada vez que el usuario vuelve de GameScreen, este LaunchedEffect se dispara
-            // y carga los puntos y el nivel actualizados desde el ProgressStorage.
             LaunchedEffect(Unit) {
                 homeViewModel.loadUserProgress()
+                homeViewModel.syncFromCloud() // Intenta traer puntos nuevos desde el SQL al entrar
             }
 
             HomeScreen(
                 viewModel = homeViewModel,
                 onNavigateToRanking = { navController.navigate("ranking") },
                 onGenerateQuestions = { category, difficulty ->
-                    // Navegamos al juego pasando la categoría y dificultad inicial
                     navController.navigate("game/$category/$difficulty")
                 }
             )
@@ -143,15 +143,15 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "General"
 
-            // Repositorio del módulo shared
-            val triviaRepository = TriviaRepository()
+            // Repositorios necesarios
+            val triviaRepository = cl.jlopezr.trivia.shared.features.game.domain.repository.TriviaRepository()
+            val userRepository = cl.jlopezr.trivia.shared.features.user.data.UserRepository()
 
-            // Creamos el ViewModel con el tipo genérico explícito para evitar errores de tipo
+            // Pasamos ambos repositorios al ViewModel
             val gameViewModel = viewModel<TriviaViewModel> {
-                TriviaViewModel(triviaRepository)
+                TriviaViewModel(triviaRepository, userRepository)
             }
 
-            // Lanzamos la carga de la primera pregunta al entrar a la pantalla
             LaunchedEffect(category) {
                 gameViewModel.loadQuestion(category)
             }
@@ -159,7 +159,6 @@ fun AppNavigation() {
             GameScreen(
                 category = category,
                 onBack = {
-                    // Al volver al Home, los puntos deberían estar actualizados
                     navController.popBackStack()
                 },
                 viewModel = gameViewModel

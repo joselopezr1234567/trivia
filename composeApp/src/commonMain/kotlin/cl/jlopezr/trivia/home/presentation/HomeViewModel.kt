@@ -3,7 +3,8 @@ package cl.jlopezr.trivia.home.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.jlopezr.trivia.home.domain.usecase.GetQuestionsUseCase
-import cl.jlopezr.trivia.core.data.ProgressStorage // Importamos el storage
+import cl.jlopezr.trivia.shared.core.data.ProgressStorage
+import cl.jlopezr.trivia.shared.features.user.data.UserRepository // Importación necesaria
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,27 +14,71 @@ import kotlinx.coroutines.launch
 
 
 class HomeViewModel(
-    private val getQuestionsUseCase: GetQuestionsUseCase
+    private val getQuestionsUseCase: GetQuestionsUseCase,
+    private val userRepository: UserRepository // 🔥 CORRECCIÓN: Agregado al constructor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
+        // Al iniciar, cargamos lo que tengamos en memoria local
         loadUserProgress()
+
+        // Al iniciar, también intentamos sincronizar con la nube (SQL)
+        syncFromCloud()
     }
 
     /**
-     * Lee los puntos y el nivel desde el ProgressStorage.
-     * Esta función se llama desde el Navigation mediante LaunchedEffect.
+     * Lee los puntos y el nivel desde el ProgressStorage (Memoria Local).
      */
     fun loadUserProgress() {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
                     totalScore = ProgressStorage.totalScore,
-                    currentLevel = ProgressStorage.currentLevel // Ahora ambos son Int
+                    currentLevel = ProgressStorage.currentLevel
                 )
+            }
+        }
+    }
+
+    /**
+     * Trae los datos desde las tablas SQL mediante el repositorio.
+     */
+    fun syncFromCloud() {
+        viewModelScope.launch {
+            val userId = "id-del-usuario-actual" // Debería venir de tu sistema de Auth
+
+            // Ahora userRepository ya es reconocido
+            userRepository.getRemoteProgress(userId).onSuccess { progress ->
+                // Actualizamos la memoria local con lo que trajo el SQL
+                ProgressStorage.totalScore = progress.totalPoints
+                ProgressStorage.currentLevel = progress.level
+
+                // Refrescamos la UI
+                loadUserProgress()
+            }.onFailure { error ->
+                println("Error al sincronizar con SQL: ${error.message}")
+            }
+        }
+    }
+
+    /**
+     * Persiste manualmente los datos en las tablas SQL.
+     */
+    fun persistToDatabase(userId: String) {
+        viewModelScope.launch {
+            try {
+                val points = ProgressStorage.totalScore
+                val level = ProgressStorage.currentLevel
+
+                // Sincronizamos con el repositorio
+                userRepository.updateRemoteProgress(userId, points, level)
+
+                println("Sincronizando con DB SQL para usuario $userId: $points puntos")
+            } catch (e: Exception) {
+                println("Error al guardar en DB: ${e.message}")
             }
         }
     }
@@ -46,9 +91,6 @@ class HomeViewModel(
         _uiState.update { it.copy(difficulty = newDiff) }
     }
 
-    /**
-     * Permite actualizar manualmente si fuera necesario.
-     */
     fun refreshProgress(newScore: Int, newLevel: Int) {
         ProgressStorage.totalScore = newScore
         ProgressStorage.currentLevel = newLevel

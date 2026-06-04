@@ -1,5 +1,6 @@
 package cl.jlopezr.server
 
+import cl.jlopezr.trivia.shared.core.network.model.*
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
@@ -7,30 +8,22 @@ import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.call
-import io.ktor.server.application.install
+import io.ktor.server.application.*
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
-import io.ktor.server.routing.post
-import io.ktor.server.routing.route
-import io.ktor.server.routing.routing
+import io.ktor.server.routing.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.javatime.timestamp
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
-import cl.jlopezr.trivia.shared.core.network.model.*
 
-// 1. Mapeo de la tabla corregido
+// 1. Mapeo de Tablas
 object UsersTable : Table("users") {
     val id = integer("id").autoIncrement()
     val username = varchar("username", 100)
@@ -41,10 +34,33 @@ object UsersTable : Table("users") {
     override val primaryKey = PrimaryKey(id)
 }
 
+object UserPointsTable : Table("user_points") {
+    val id = integer("id").autoIncrement()
+    val userEmail = varchar("user_id", 100)
+    val totalPoints = integer("total_points")
+    val updatedAt = timestamp("updated_at")
+    override val primaryKey = PrimaryKey(id)
+}
+
+object UserLevelsTable : Table("user_levels") {
+    val id = integer("id").autoIncrement()
+    val userEmail = varchar("user_id", 100)
+    val currentLevel = integer("current_level")
+    val updatedAt = timestamp("updated_at")
+    override val primaryKey = PrimaryKey(id)
+}
+
 @Serializable
 data class LoginResponse(
     @SerialName("success") val success: Boolean,
     @SerialName("message") val message: String
+)
+
+@Serializable
+data class UserProgressRequest(
+    val email: String,
+    val points: Int,
+    val level: Int
 )
 
 fun main() {
@@ -69,56 +85,106 @@ fun main() {
         }
 
         routing {
+            // --- RUTAS DE AUTENTICACIÓN ---
             route("/auth") {
                 post("/login") {
                     try {
                         val credentials = call.receive<UserLoginRequest>()
+                        println("LOG [LOGIN]: Intentando acceso para ${credentials.email}")
                         if (checkInDatabase(credentials)) {
                             call.respond(HttpStatusCode.OK, LoginResponse(true, "Acceso concedido"))
                         } else {
                             call.respond(HttpStatusCode.Unauthorized, LoginResponse(false, "Credenciales incorrectas"))
                         }
                     } catch (e: Exception) {
-                        call.respond(HttpStatusCode.BadRequest, LoginResponse(false, "Error: ${e.message}"))
-                    }
-                }
-
-                post("/register") {
-                    try {
-                        val signup = call.receive<UserRegisterRequest>()
-                        val alreadyExists = transaction {
-                            UsersTable.selectAll().where { UsersTable.email eq signup.email }.count() > 0
-                        }
-
-                        if (alreadyExists) {
-                            call.respond(HttpStatusCode.Conflict, LoginResponse(false, "El correo ya está registrado"))
-                        } else {
-                            transaction {
-                                UsersTable.insert {
-                                    it[username] = signup.username
-                                    it[email] = signup.email
-                                    it[password] = signup.password
-                                    it[phone] = signup.phone
-                                    it[createdAt] = Instant.now()
-                                }
-                            }
-                            call.respond(HttpStatusCode.Created, LoginResponse(true, "Usuario creado exitosamente"))
-                        }
-                    } catch (e: Exception) {
+                        println("ERROR [LOGIN]: ${e.message}")
                         call.respond(HttpStatusCode.BadRequest, LoginResponse(false, "Error: ${e.message}"))
                     }
                 }
             }
 
+            // --- RUTAS DE PROGRESO ---
+            route("/user") {
+                get("/progress/{email}") {
+                    val email = call.parameters["email"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    println("LOG [GET PROGRESS]: Consultando puntos para -> $email")
+                    try {
+                        val progress = transaction {
+                            val p = UserPointsTable.selectAll().where { UserPointsTable.userEmail eq email }
+                                .map { it[UserPointsTable.totalPoints] }.singleOrNull() ?: 0
+                            val l = UserLevelsTable.selectAll().where { UserLevelsTable.userEmail eq email }
+                                .map { it[UserLevelsTable.currentLevel] }.singleOrNull() ?: 1
+                            UserProgressRequest(email, p, l)
+                        }
+                        println("LOG [GET PROGRESS]: Datos encontrados -> Puntos: ${progress.points}, Nivel: ${progress.level}")
+                        call.respond(HttpStatusCode.OK, progress)
+                    } catch (e: Exception) {
+                        println("ERROR [GET PROGRESS]: ${e.message}")
+                        call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.message))
+                    }
+                }
+
+                post("/progress/update") {
+                    println("LOG [UPDATE PROGRESS]: --- SOLICITUD RECIBIDA ---")
+                    try {
+                        val req = call.receive<UserProgressRequest>()
+                        println("LOG [UPDATE PROGRESS]: Datos recibidos -> Email: ${req.email}, Puntos: ${req.points}, Nivel: ${req.level}")
+
+                        transaction {
+                            // Sincronizar Puntos
+                            val hasPoints = UserPointsTable.selectAll().where { UserPointsTable.userEmail eq req.email }.count() > 0
+                            if (hasPoints) {
+                                println("LOG [SQL]: Actualizando puntos existentes para ${req.email}")
+                                UserPointsTable.update({ UserPointsTable.userEmail eq req.email }) {
+                                    it[totalPoints] = req.points
+                                    it[updatedAt] = Instant.now()
+                                }
+                            } else {
+                                println("LOG [SQL]: Insertando nuevos puntos para ${req.email}")
+                                UserPointsTable.insert {
+                                    it[userEmail] = req.email
+                                    it[totalPoints] = req.points
+                                    it[updatedAt] = Instant.now()
+                                }
+                            }
+
+                            // Sincronizar Nivel
+                            val hasLevel = UserLevelsTable.selectAll().where { UserLevelsTable.userEmail eq req.email }.count() > 0
+                            if (hasLevel) {
+                                UserLevelsTable.update({ UserLevelsTable.userEmail eq req.email }) {
+                                    it[currentLevel] = req.level
+                                    it[updatedAt] = Instant.now()
+                                }
+                            } else {
+                                UserLevelsTable.insert {
+                                    it[userEmail] = req.email
+                                    it[currentLevel] = req.level
+                                    it[updatedAt] = Instant.now()
+                                }
+                            }
+                        }
+                        println("LOG [UPDATE PROGRESS]: ¡Guardado exitoso en Postgres!")
+                        call.respond(HttpStatusCode.OK, mapOf("status" to "success"))
+                    } catch (e: Exception) {
+                        println("ERROR [UPDATE PROGRESS]: Error crítico al guardar -> ${e.message}")
+                        e.printStackTrace()
+                        call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
+                    }
+                }
+            }
+
+            // --- RUTA DE TRIVIA ---
             route("/trivia") {
                 post("/generate") {
                     try {
                         val request = call.receive<TriviaRequest>()
+                        println("LOG [TRIVIA]: Generando pregunta para tema: ${request.topic}")
 
-                        val historyBlock = if (request.history.isNullOrEmpty() == false) {
+                        val historyBlock = if (!request.history.isNullOrEmpty()) {
                             "\nPROHIBIDO REPETIR ESTAS PREGUNTAS: \n- ${request.history?.joinToString("\n- ")}"
                         } else ""
 
+                        // LLAMADA A OPENAI
                         val chatCompletion = openAI.chatCompletion(
                             ChatCompletionRequest(
                                 model = ModelId("gpt-3.5-turbo"),
@@ -126,38 +192,28 @@ fun main() {
                                     ChatMessage(
                                         role = ChatRole.System,
                                         content = """
-                                            Eres un generador de trivias experto. 
-                                            Responde UNICAMENTE con JSON.
-                                            REGLAS DE DIFICULTAD:
-                                            - Básico: Preguntas muy simples.
-                                            - Intermedio: Conocimiento específico.
-                                            - Difícil: Solo para expertos.
-                                            
+                                            Eres un generador de trivias experto. Responde UNICAMENTE con JSON.
                                             FORMATO: {"question": "...", "options": ["...", "...", "...", "..."], "correctIndex": 0}
                                             $historyBlock
                                         """.trimIndent()
                                     ),
-                                    ChatMessage(
-                                        role = ChatRole.User,
-                                        content = "Tema: ${request.topic}. DIFICULTAD OBLIGATORIA: ${request.difficulty}."
-                                    )
+                                    ChatMessage(role = ChatRole.User, content = "Tema: ${request.topic}. Dificultad: ${request.difficulty}.")
                                 ),
                                 temperature = 0.8
                             )
                         )
 
                         val rawResult = chatCompletion.choices.first().message.content ?: "{}"
-                        val cleanJson = rawResult.trim()
-                            .removePrefix("```json")
-                            .removeSuffix("```")
-                            .trim()
+                        val cleanJson = rawResult.trim().removePrefix("```json").removeSuffix("```").trim()
 
+                        // IMPORTANTE: Aquí es donde enviamos la respuesta para evitar el 404
                         val triviaResponse = Json.decodeFromString<TriviaResponse>(cleanJson)
+                        println("LOG [TRIVIA]: Enviando respuesta exitosa")
                         call.respond(HttpStatusCode.OK, triviaResponse)
 
                     } catch (e: Exception) {
-                        println("Error: ${e.message}")
-                        call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error IA: ${e.message}"))
+                        println("ERROR [TRIVIA]: ${e.message}")
+                        call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Unknown error")))
                     }
                 }
             }
