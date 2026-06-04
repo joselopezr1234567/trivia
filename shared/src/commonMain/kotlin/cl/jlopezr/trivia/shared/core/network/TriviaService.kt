@@ -11,7 +11,6 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 class TriviaService {
-    // Cliente de Ktor configurado para JSON
     private val client = HttpClient {
         install(ContentNegotiation) {
             json(Json {
@@ -23,18 +22,20 @@ class TriviaService {
 
     /**
      * Esta función llama a tu servidor Ktor.
-     * Si usas el emulador de Android, localhost es 10.0.2.2
+     * He cambiado el nombre del parámetro de 'topic' a 'request' para que sea más claro.
      */
-    suspend fun generateTrivia(topic: String): TriviaResponse? {
+    suspend fun generateTrivia(request: TriviaRequest): TriviaResponse? {
         return try {
-            // ✅ USAR 10.0.2.2 PARA EL EMULADOR
             val response = client.post("http://10.0.2.2:8080/trivia/generate") {
                 contentType(ContentType.Application.Json)
-                setBody(TriviaRequest(topic = topic))
+
+                // ✅ CORRECTO: Pasamos el objeto 'request' directamente.
+                // No hace falta poner setBody(TriviaRequest(...)) porque 'request' ya es de ese tipo.
+                setBody(request)
             }
             response.body<TriviaResponse>()
         } catch (e: Exception) {
-            println("DEBUG: Error en red: ${e.message}") // Esto saldrá en el Logcat de Android Studio
+            println("DEBUG: Error en red: ${e.message}")
             null
         }
     }

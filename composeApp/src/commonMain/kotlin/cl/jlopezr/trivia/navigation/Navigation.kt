@@ -20,7 +20,9 @@ import cl.jlopezr.trivia.home.presentation.HomeScreen
 import cl.jlopezr.trivia.home.presentation.HomeViewModel
 import cl.jlopezr.trivia.login.presentation.LoginScreen
 import cl.jlopezr.trivia.registrer.presentation.RegisterScreen
-import cl.jlopezr.trivia.game.presentation.GameScreen // Asegúrate de crear este paquete
+import cl.jlopezr.trivia.game.presentation.GameScreen
+import cl.jlopezr.trivia.game.presentation.TriviaViewModel
+import cl.jlopezr.trivia.shared.features.game.domain.repository.TriviaRepository
 
 @Composable
 fun AppNavigation() {
@@ -43,12 +45,13 @@ fun AppNavigation() {
             )
         }
 
-        // 2. Pantalla: Ingresar Teléfono
+        // 2. Pantalla: Olvidé Contraseña (Ingresar Teléfono)
         composable("forgot_password") {
             val repository = ForgotPasswordRepositoryImpl()
             val validateUseCase = ValidatePhoneUseCase(repository)
             val resetUseCase = ResetPasswordUseCase(repository)
-            val viewModel: ForgotPasswordViewModel = viewModel {
+
+            val viewModel = viewModel<ForgotPasswordViewModel> {
                 ForgotPasswordViewModel(validateUseCase, resetUseCase)
             }
 
@@ -66,7 +69,7 @@ fun AppNavigation() {
             )
         }
 
-        // 3. Pantalla: Reset de Contraseña
+        // 3. Pantalla: Reset de Contraseña (Validar código y nueva clave)
         composable(
             route = "reset_password/{phone}",
             arguments = listOf(navArgument("phone") { type = NavType.StringType })
@@ -75,7 +78,8 @@ fun AppNavigation() {
             val repository = ForgotPasswordRepositoryImpl()
             val validateUseCase = ValidatePhoneUseCase(repository)
             val resetUseCase = ResetPasswordUseCase(repository)
-            val viewModel: ForgotPasswordViewModel = viewModel {
+
+            val viewModel = viewModel<ForgotPasswordViewModel> {
                 ForgotPasswordViewModel(validateUseCase, resetUseCase)
             }
 
@@ -103,11 +107,12 @@ fun AppNavigation() {
             RegisterScreen(onNavigateToLogin = { navController.popBackStack() })
         }
 
-        // 5. HOME
+        // 5. HOME (Pantalla Principal con Categorías y Puntos)
         composable("home") {
             val repository = TriviaRepositoryImpl()
             val getQuestionsUseCase = GetQuestionsUseCase(repository)
-            val homeViewModel: HomeViewModel = viewModel {
+
+            val homeViewModel = viewModel<HomeViewModel> {
                 HomeViewModel(getQuestionsUseCase)
             }
 
@@ -115,12 +120,13 @@ fun AppNavigation() {
                 viewModel = homeViewModel,
                 onNavigateToRanking = { navController.navigate("ranking") },
                 onGenerateQuestions = { category, difficulty ->
+                    // Navegamos al juego pasando la categoría y dificultad inicial
                     navController.navigate("game/$category/$difficulty")
                 }
             )
         }
 
-        // 6. GAME SCREEN (Recibe argumentos dinámicos)
+        // 6. GAME SCREEN (Donde ocurre la trivia y las animaciones)
         composable(
             route = "game/{category}/{difficulty}",
             arguments = listOf(
@@ -129,18 +135,33 @@ fun AppNavigation() {
             )
         ) { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "General"
-            val difficulty = backStackEntry.arguments?.getString("difficulty") ?: "Básico"
+
+            // Repositorio del módulo shared
+            val triviaRepository = TriviaRepository()
+
+            // Creamos el ViewModel con el tipo genérico explícito para evitar errores de tipo
+            val gameViewModel = viewModel<TriviaViewModel> {
+                TriviaViewModel(triviaRepository)
+            }
+
+            // Lanzamos la carga de la primera pregunta al entrar a la pantalla
+            LaunchedEffect(category) {
+                gameViewModel.loadQuestion(category)
+            }
 
             GameScreen(
                 category = category,
-                difficulty = difficulty,
-                onBack = { navController.popBackStack() }
+                onBack = {
+                    // Al volver al Home, los puntos deberían estar actualizados
+                    navController.popBackStack()
+                },
+                viewModel = gameViewModel
             )
         }
 
         // 7. RANKING
         composable("ranking") {
-            // RankingScreen(onBack = { navController.popBackStack() })
+            // Aquí iría tu pantalla de RankingScreen(onBack = { navController.popBackStack() })
         }
     }
 }

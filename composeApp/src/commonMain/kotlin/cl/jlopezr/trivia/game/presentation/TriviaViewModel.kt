@@ -1,47 +1,146 @@
 package cl.jlopezr.trivia.game.presentation
 
-// 1. IMPORTANTE: Importar el repositorio desde el paquete correcto del módulo SHARED
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel // IMPORTANTE
+import androidx.lifecycle.viewModelScope // IMPORTANTE
 import cl.jlopezr.trivia.shared.features.game.domain.repository.TriviaRepository
-// 2. IMPORTANTE: Usar TriviaResponse que es el modelo que viene del servidor
 import cl.jlopezr.trivia.shared.core.network.model.TriviaResponse
+import cl.jlopezr.trivia.shared.core.network.model.TriviaRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-
+import kotlinx.coroutines.delay
 
 sealed interface TriviaUiState {
     object Loading : TriviaUiState
-    // Cambiado QuestionResponse -> TriviaResponse
     data class Success(val question: TriviaResponse) : TriviaUiState
     data class Error(val message: String) : TriviaUiState
 }
 
+// Definimos los tipos de feedback visual
+enum class FeedbackType { CORRECTO, INCORRECTO, SUBIO_NIVEL }
+
 class TriviaViewModel(
-    private val repository: TriviaRepository,
-    // En Compose Multiplatform, Dispatchers.Main está bien,
-    // pero para el scope suele usarse viewModelScope si usas una librería de VM,
-    // o este scope manual está bien para empezar.
-    private val viewModelScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
-) {
+    private val repository: TriviaRepository
+) : ViewModel() { // Ahora hereda de ViewModel correctamente
 
     private val _uiState = MutableStateFlow<TriviaUiState>(TriviaUiState.Loading)
     val uiState: StateFlow<TriviaUiState> = _uiState.asStateFlow()
 
+    // --- ESTADOS PARA ANIMACIÓN ---
+    var showFeedback by mutableStateOf<FeedbackType?>(null)
+        private set
+
+    // --- LÓGICA DE JUEGO ---
+    private val askedQuestions = mutableListOf<String>()
+
+    var consecutiveCorrect by mutableStateOf(0)
+        private set
+
+    var totalScore by mutableStateOf(0)
+        private set
+
+    var currentLevel by mutableStateOf("Básico")
+        private set
+
+    /**
+     * Carga una nueva pregunta desde el repositorio.
+     */
     fun loadQuestion(category: String) {
         viewModelScope.launch {
             _uiState.value = TriviaUiState.Loading
+            try {
+                val request = TriviaRequest(
+                    category,
+                    currentLevel,
+                    askedQuestions.toList()
+                )
 
-            // Llamamos al repo (quitamos userId si el servidor no lo pide aún)
-            repository.getNewQuestion(category)
-                .onSuccess { question ->
-                    _uiState.value = TriviaUiState.Success(question)
-                }
-                .onFailure { error ->
-                    _uiState.value = TriviaUiState.Error(error.message ?: "Error al cargar la pregunta")
-                }
+                repository.getNewQuestion(request)
+                    .onSuccess { result ->
+                        askedQuestions.add(result.question)
+                        _uiState.value = TriviaUiState.Success(result)
+                    }
+                    .onFailure { error ->
+                        _uiState.value = TriviaUiState.Error(error.message ?: "Error de red")
+                    }
+            } catch (e: Exception) {
+                _uiState.value = TriviaUiState.Error("Error: ${e.message}")
+            }
         }
+    }
+
+    /**
+     * Procesa la respuesta con ANIMACIONES y PERSISTENCIA.
+     */
+    fun processAnswer(
+        isCorrect: Boolean,
+        category: String,
+        onGameOver: () -> Unit
+    ) {
+        viewModelScope.launch {
+            if (isCorrect) {
+                // 1. Lógica de puntos
+                val pointsToAdd = when (currentLevel) {
+                    "Básico" -> 1
+                    "Intermedio" -> 2
+                    "Difícil" -> 3
+                    else -> 1
+                }
+                totalScore += pointsToAdd
+                consecutiveCorrect += 1
+
+                // 2. Determinar si es acierto normal o subida de nivel
+                if (consecutiveCorrect >= 3) {
+                    upgradeLevel()
+                    consecutiveCorrect = 0
+                    showFeedback = FeedbackType.SUBIO_NIVEL
+                } else {
+                    showFeedback = FeedbackType.CORRECTO
+                }
+
+                // 3. Persistencia
+                saveProgress()
+
+                // 4. Esperar a que termine la animación (2 segundos)
+                delay(2000)
+                showFeedback = null
+
+                // 5. Cargar siguiente pregunta
+                loadQuestion(category)
+
+            } else {
+                // SE EQUIVOCÓ
+                showFeedback = FeedbackType.INCORRECTO
+
+                // Esperar para mostrar el error
+                delay(2000)
+                showFeedback = null
+
+                saveProgress() // Guardar antes de salir
+                onGameOver()
+            }
+        }
+    }
+
+    private fun upgradeLevel() {
+        currentLevel = when (currentLevel) {
+            "Básico" -> "Intermedio"
+            "Intermedio" -> "Difícil"
+            else -> "Difícil"
+        }
+    }
+
+    private fun saveProgress() {
+        // Aquí llamarás a tu base de datos local o remota
+        println("PROGRESO GUARDADO: Nivel $currentLevel - Puntos $totalScore")
+        // TODO: repository.saveUserData(totalScore, currentLevel)
+    }
+
+    fun saveFinalScore() {
+        saveProgress()
     }
 }

@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,7 +39,6 @@ fun HomeScreen(
 
     val difficulties = listOf("Básico", "Intermedio", "Difícil")
 
-    // Estilo general con sombra negra para legibilidad
     val outlineStyle = TextStyle(
         color = Color.White,
         shadow = Shadow(
@@ -47,7 +48,6 @@ fun HomeScreen(
         )
     )
 
-    // Estilo específico para el placeholder (más grande y con borde negro marcado)
     val placeholderStyle = TextStyle(
         color = Color.White.copy(alpha = 0.8f),
         fontSize = 20.sp,
@@ -63,7 +63,6 @@ fun HomeScreen(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(
-                // MENU MÁS TRANSPARENTE
                 drawerContainerColor = Color.Black.copy(alpha = 0.75f),
                 modifier = Modifier.width(280.dp),
                 drawerShape = RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp),
@@ -125,12 +124,58 @@ fun HomeScreen(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.height(150.dp))
+                    Spacer(modifier = Modifier.height(80.dp)) // Ajustado un poco hacia arriba
 
                     Text(
                         text = "¡Bienvenido!",
                         style = outlineStyle.copy(fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
                     )
+
+                    // --- NUEVO PANEL DE PROGRESO PERSISTENTE ---
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Surface(
+                        color = Color.White.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(20.dp),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Mostrar Nivel
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.TrendingUp, contentDescription = null, tint = Color.Yellow, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("NIVEL", style = outlineStyle.copy(fontSize = 12.sp, fontWeight = FontWeight.Light))
+                                }
+                                Text(
+                                    text = state.currentLevel, // Asegúrate de tener esto en tu HomeUiState
+                                    style = outlineStyle.copy(fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color.Yellow)
+                                )
+                            }
+
+                            VerticalDivider(color = Color.White.copy(alpha = 0.2f), modifier = Modifier.height(40.dp))
+
+                            // Mostrar Puntos
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Star, contentDescription = null, tint = Color.Cyan, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("PUNTOS", style = outlineStyle.copy(fontSize = 12.sp, fontWeight = FontWeight.Light))
+                                }
+                                Text(
+                                    text = "${state.totalScore}", // Asegúrate de tener esto en tu HomeUiState
+                                    style = outlineStyle.copy(fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color.Cyan)
+                                )
+                            }
+                        }
+                    }
+                    // -------------------------------------------
+
+                    Spacer(modifier = Modifier.height(32.dp))
 
                     Text(
                         text = "Elige una categoría para jugar",
@@ -138,18 +183,16 @@ fun HomeScreen(
                         modifier = Modifier.padding(top = 8.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(40.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     // INPUT CON EFECTO DE PROFUNDIDAD
                     Box(modifier = Modifier.fillMaxWidth().height(65.dp)) {
-                        // Capa de fondo para la sombra/profundidad
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .offset(y = 4.dp)
                                 .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
                         )
-                        // Superficie principal del input
                         Surface(
                             color = Color.White.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(16.dp),
@@ -187,18 +230,17 @@ fun HomeScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(60.dp)) // Espacio hacia el centro
+                    Spacer(modifier = Modifier.height(40.dp))
 
-                    // DIFICULTADES CENTRADAS EN LA MITAD
                     Text(
-                        text = "Dificultad:",
+                        text = "Dificultad sugerida:",
                         style = outlineStyle.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
                     LazyRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center, // CENTRADO
+                        horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         items(difficulties) { diff ->

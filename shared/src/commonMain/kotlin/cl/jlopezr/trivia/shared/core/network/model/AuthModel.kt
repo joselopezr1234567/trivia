@@ -30,9 +30,13 @@ data class UserProfileResponse(
     val token: String = ""
 )
 
-// --- AGREGA ESTOS PARA LA TRIVIA ---
+// shared/src/commonMain/kotlin/.../TriviaRequest.kt
 @Serializable
-data class TriviaRequest(val topic: String)
+data class TriviaRequest(
+    val topic: String,
+    val difficulty: String,      // Debe ser String
+    val history: List<String>?   // Debe ser List<String>
+)
 
 @Serializable
 data class TriviaResponse(
