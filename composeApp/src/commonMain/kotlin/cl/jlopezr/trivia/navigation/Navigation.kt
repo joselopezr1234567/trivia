@@ -116,6 +116,13 @@ fun AppNavigation() {
                 HomeViewModel(getQuestionsUseCase)
             }
 
+            // 🔥 REFRESCAR PROGRESO AL VOLVER:
+            // Cada vez que el usuario vuelve de GameScreen, este LaunchedEffect se dispara
+            // y carga los puntos y el nivel actualizados desde el ProgressStorage.
+            LaunchedEffect(Unit) {
+                homeViewModel.loadUserProgress()
+            }
+
             HomeScreen(
                 viewModel = homeViewModel,
                 onNavigateToRanking = { navController.navigate("ranking") },

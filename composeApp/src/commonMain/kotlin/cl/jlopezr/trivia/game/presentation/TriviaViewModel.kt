@@ -130,10 +130,13 @@ class TriviaViewModel(
         currentLevel += 1 // Simplemente sumamos 1 al nivel actual
     }
 
+    // En TriviaViewModel.kt
     private fun saveProgress() {
-        // Aquí llamarás a tu base de datos local o remota
-        println("PROGRESO GUARDADO: Nivel $currentLevel - Puntos $totalScore")
-        // TODO: repository.saveUserData(totalScore, currentLevel)
+        // Guardamos en el objeto compartido
+        cl.jlopezr.trivia.core.data.ProgressStorage.totalScore = totalScore
+        cl.jlopezr.trivia.core.data.ProgressStorage.currentLevel = currentLevel
+
+        println("PROGRESO GUARDADO EN STORAGE: Nivel $currentLevel - Puntos $totalScore")
     }
 
     fun saveFinalScore() {

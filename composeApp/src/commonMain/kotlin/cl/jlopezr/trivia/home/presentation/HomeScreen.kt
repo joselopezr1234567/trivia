@@ -127,7 +127,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(80.dp)) // Ajustado un poco hacia arriba
 
                     Text(
-                        text = "¡Bienvenido!",
+                        text = "",
                         style = outlineStyle.copy(fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
                     )
 
