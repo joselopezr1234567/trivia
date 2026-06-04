@@ -8,7 +8,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -91,35 +94,78 @@ fun GameScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.6f)), // Oscurece el fondo
+                        .background(Color.Black.copy(alpha = 0.7f)), // Un poco más oscuro para resaltar el texto
                     contentAlignment = Alignment.Center
                 ) {
                     when (feedback) {
-                        FeedbackType.CORRECTO -> FeedbackContent("¡CORRECTO!", Color.Green, "✨ 🎆 ✨")
-                        FeedbackType.INCORRECTO -> FeedbackContent("¡INCORRECTO!", Color.Red, "❌")
-                        FeedbackType.SUBIO_NIVEL -> FeedbackContent("¡NIVEL COMPLETADO!", Color.Yellow, "🎊 🏆 🎊\nSiguiente Nivel")
+                        FeedbackType.CORRECTO -> {
+                            FeedbackContent(
+                                title = "¡CORRECTO!",
+                                color = Color.Green,
+                                subTitle = "¡Vas por buen camino!"
+                            )
+                        }
+                        FeedbackType.INCORRECTO -> {
+                            FeedbackContent(
+                                title = "¡INCORRECTO!",
+                                color = Color.Red,
+                                subTitle = "¡Vuelve a intentarlo!"
+                            )
+                        }
+                        FeedbackType.SUBIO_NIVEL -> {
+                            FeedbackContent(
+                                title = "¡BIEN HECHO!",
+                                color = Color.Yellow,
+                                // Ahora muestra el nivel como número dinámicamente
+                                subTitle = "Subiste al Nivel ${viewModel.currentLevel}"
+                            )
+                        }
                         null -> {}
                     }
                 }
             }
+
         }
     }
 }
 
 @Composable
 fun FeedbackContent(title: String, color: Color, subTitle: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(24.dp)
+    ) {
+        // Los emojis o iconos de fuegos artificiales
         Text(
-            text = subTitle,
-            fontSize = 60.sp, // Tamaño grande para los "fuegos artificiales" (emojis)
+            text = "✨ 🎆 ✨",
+            fontSize = 60.sp,
             modifier = Modifier.padding(bottom = 16.dp)
         )
+
+        // Título principal (¡CORRECTO! o ¡NIVEL COMPLETADO!)
         Text(
             text = title,
-            color = color,
-            fontSize = 40.sp,
+            color = color, // Aquí usará Verde o Amarillo según el caso
+            fontSize = 38.sp,
             fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            style = TextStyle(
+                shadow = Shadow(color = Color.Black, offset = Offset(4f, 4f), blurRadius = 8f)
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // El texto de "Siguiente Nivel" ahora será Blanco y grande
+        Text(
+            text = subTitle,
+            color = Color.White, // <--- CAMBIO: Forzamos Blanco para que se vea
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            style = TextStyle(
+                shadow = Shadow(color = Color.Black, offset = Offset(2f, 2f), blurRadius = 4f)
+            )
         )
     }
 }

@@ -43,8 +43,9 @@ class TriviaViewModel(
     var totalScore by mutableStateOf(0)
         private set
 
-    var currentLevel by mutableStateOf("Básico")
+    var currentLevel by mutableStateOf(1)
         private set
+
 
     /**
      * Carga una nueva pregunta desde el repositorio.
@@ -55,7 +56,7 @@ class TriviaViewModel(
             try {
                 val request = TriviaRequest(
                     category,
-                    currentLevel,
+                    currentLevel.toString(), // <--- CAMBIO: Agregamos .toString()
                     askedQuestions.toList()
                 )
 
@@ -84,11 +85,10 @@ class TriviaViewModel(
         viewModelScope.launch {
             if (isCorrect) {
                 // 1. Lógica de puntos
-                val pointsToAdd = when (currentLevel) {
-                    "Básico" -> 1
-                    "Intermedio" -> 2
-                    "Difícil" -> 3
-                    else -> 1
+                val pointsToAdd = when {
+                    currentLevel <= 2 -> 1      // Niveles 1-2: 1 punto
+                    currentLevel <= 5 -> 2      // Niveles 3-5: 2 puntos
+                    else -> 3                   // Nivel 6+: 3 puntos
                 }
                 totalScore += pointsToAdd
                 consecutiveCorrect += 1
@@ -127,11 +127,7 @@ class TriviaViewModel(
     }
 
     private fun upgradeLevel() {
-        currentLevel = when (currentLevel) {
-            "Básico" -> "Intermedio"
-            "Intermedio" -> "Difícil"
-            else -> "Difícil"
-        }
+        currentLevel += 1 // Simplemente sumamos 1 al nivel actual
     }
 
     private fun saveProgress() {

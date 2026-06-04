@@ -144,16 +144,28 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Mostrar Nivel
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.TrendingUp, contentDescription = null, tint = Color.Yellow, modifier = Modifier.size(16.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.TrendingUp,
+                                        contentDescription = null,
+                                        tint = Color.Yellow,
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                     Spacer(Modifier.width(4.dp))
-                                    Text("NIVEL", style = outlineStyle.copy(fontSize = 12.sp, fontWeight = FontWeight.Light))
+                                    Text(
+                                        text = "PROGRESO",
+                                        style = outlineStyle.copy(fontSize = 12.sp, fontWeight = FontWeight.Light)
+                                    )
                                 }
                                 Text(
-                                    text = state.currentLevel, // Asegúrate de tener esto en tu HomeUiState
-                                    style = outlineStyle.copy(fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color.Yellow)
+                                    // Agregamos "Nivel" antes del número para que sea más claro
+                                    text = "Nivel ${state.currentLevel}",
+                                    style = outlineStyle.copy(
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.Yellow
+                                    )
                                 )
                             }
 
