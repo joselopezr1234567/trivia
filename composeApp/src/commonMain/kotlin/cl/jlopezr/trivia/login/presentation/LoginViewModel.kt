@@ -53,9 +53,10 @@ class LoginViewModel(
 
             // Llamada al repositorio (Render o Mock)
             authRepository.login(currentEmail, currentPassword)
-                .onSuccess {
+                .onSuccess { userProfile ->
                     println("DEBUG: Login exitoso en el repositorio para $currentEmail")
-                    UserSession.email = currentEmail // 🔥 GUARDAMOS EL EMAIL EN LA SESIÓN
+                    UserSession.email = currentEmail
+                    UserSession.username = userProfile.username // 🔥 GUARDAMOS EL USERNAME
                     _state.update {
                         it.copy(
                             isLoading = false,
