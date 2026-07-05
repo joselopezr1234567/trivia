@@ -127,6 +127,11 @@ fun AppNavigation() {
             HomeScreen(
                 viewModel = homeViewModel,
                 onNavigateToRanking = { navController.navigate("ranking") },
+                onNavigateToLogin = {
+                    navController.navigate("login") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                },
                 onGenerateQuestions = { category, difficulty ->
                     navController.navigate("game/$category/$difficulty")
                 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TrendingUp
@@ -24,12 +25,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.jlopezr.trivia.core.components.TriviaBackgroundContainer
 import cl.jlopezr.trivia.core.components.TriviaButton
+import cl.jlopezr.trivia.shared.core.data.UserSession
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToRanking: () -> Unit,
+    onNavigateToLogin: () -> Unit, // 🔥 Agregamos esta navegación
     onGenerateQuestions: (category: String, difficulty: String) -> Unit,
     viewModel: HomeViewModel
 ) {
@@ -89,6 +92,25 @@ fun HomeScreen(
                     colors = NavigationDrawerItemDefaults.colors(
                         unselectedContainerColor = Color.Transparent,
                         selectedContainerColor = Color.White.copy(alpha = 0.1f)
+                    ),
+                    modifier = Modifier.padding(8.dp)
+                )
+
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = Color.Red) },
+                    label = { Text("Cerrar Sesión", style = outlineStyle.copy(fontSize = 16.sp, color = Color.Red)) },
+                    selected = false,
+                    onClick = {
+                        scope.launch {
+                            drawerState.close()
+                            // Limpiar sesión
+                            UserSession.email = ""
+                            UserSession.username = ""
+                            onNavigateToLogin()
+                        }
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = Color.Transparent
                     ),
                     modifier = Modifier.padding(8.dp)
                 )
