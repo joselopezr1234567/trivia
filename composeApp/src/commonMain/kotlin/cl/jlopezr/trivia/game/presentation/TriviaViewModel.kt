@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import cl.jlopezr.trivia.shared.features.user.data.UserRepository
+import cl.jlopezr.trivia.shared.core.data.UserSession
 
 sealed interface TriviaUiState {
     object Loading : TriviaUiState
@@ -123,13 +124,17 @@ class TriviaViewModel(
 
         // 2. Guardar en la nube (SQL)
         viewModelScope.launch {
-            val userId = "id-del-usuario-actual" // Esto debería venir de tu sesión real
-
-            userRepository.updateRemoteProgress(
-                email = userId, // <--- Cambiamos 'userId' por 'email'
-                points = totalScore,
-                level = currentLevel
-            )
+            val userEmail = UserSession.email
+            if (userEmail.isNotBlank()) {
+                println("LOG [VM]: Sincronizando progreso para $userEmail -> Puntos: $totalScore, Nivel: $currentLevel")
+                userRepository.updateRemoteProgress(
+                    email = userEmail,
+                    points = totalScore,
+                    level = currentLevel
+                )
+            } else {
+                println("ERROR [VM]: No se pudo sincronizar, UserSession.email está vacío")
+            }
         }
     }
 

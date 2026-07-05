@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 import cl.jlopezr.trivia.shared.features.login.domain.AuthRepository
+import cl.jlopezr.trivia.shared.core.data.UserSession
 
 
 
@@ -53,7 +54,8 @@ class LoginViewModel(
             // Llamada al repositorio (Render o Mock)
             authRepository.login(currentEmail, currentPassword)
                 .onSuccess {
-                    println("DEBUG: Login exitoso en el repositorio")
+                    println("DEBUG: Login exitoso en el repositorio para $currentEmail")
+                    UserSession.email = currentEmail // 🔥 GUARDAMOS EL EMAIL EN LA SESIÓN
                     _state.update {
                         it.copy(
                             isLoading = false,

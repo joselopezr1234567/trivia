@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.jlopezr.trivia.home.domain.usecase.GetQuestionsUseCase
 import cl.jlopezr.trivia.shared.core.data.ProgressStorage
+import cl.jlopezr.trivia.shared.core.data.UserSession
 import cl.jlopezr.trivia.shared.features.user.data.UserRepository // Importación necesaria
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,10 +49,11 @@ class HomeViewModel(
      */
     fun syncFromCloud() {
         viewModelScope.launch {
-            val userId = "id-del-usuario-actual" // Debería venir de tu sistema de Auth
+            val userEmail = UserSession.email
+            if (userEmail.isBlank()) return@launch
 
             // Ahora userRepository ya es reconocido
-            userRepository.getRemoteProgress(userId).onSuccess { progress ->
+            userRepository.getRemoteProgress(userEmail).onSuccess { progress ->
                 // Actualizamos la memoria local con lo que trajo el SQL
                 ProgressStorage.totalScore = progress.totalPoints
                 ProgressStorage.currentLevel = progress.level
