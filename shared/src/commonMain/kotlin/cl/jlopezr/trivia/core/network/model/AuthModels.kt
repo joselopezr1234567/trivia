@@ -43,5 +43,6 @@ data class QuestionResponse(
 data class RankingItem(
     @SerialName("username") val username: String,
     @SerialName("score") val score: Int,
+    @SerialName("level") val level: Int = 1, // 🔥 Agregamos nivel
     @SerialName("position") val position: Int? = null
 )

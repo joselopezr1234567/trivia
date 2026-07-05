@@ -33,7 +33,7 @@ class RankingViewModel : ViewModel() {
                         position = index + 1,
                         username = networkItem.username, // Mapeamos el username de la red al campo username de la UI
                         score = networkItem.score,       // Mapeamos el score de la red al campo score de la UI
-                        level = 1                        // El modelo de red no trae nivel, usamos 1 por defecto
+                        level = networkItem.level        // 🔥 Mapeamos el nivel real que viene del servidor
                     )
                 }
                 println("LOG [VM]: Mapeo completado: ${uiData.size} elementos para UI")

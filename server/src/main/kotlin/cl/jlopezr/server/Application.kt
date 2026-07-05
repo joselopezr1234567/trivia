@@ -241,6 +241,7 @@ fun main() {
                                     RankingItem(
                                         username = row[UsersTable.username],
                                         score = row.getOrNull(UserPointsTable.totalPoints) ?: 0,
+                                        level = row.getOrNull(UserLevelsTable.currentLevel) ?: 1, // 🔥 Ahora enviamos el nivel real
                                         position = index + 1
                                     )
                                 }
