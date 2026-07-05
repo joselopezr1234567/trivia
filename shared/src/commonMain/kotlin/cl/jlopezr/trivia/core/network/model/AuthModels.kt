@@ -1,5 +1,6 @@
 package cl.jlopezr.trivia.core.network.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -37,4 +38,10 @@ data class QuestionResponse(
     val optionC: String,
     val optionD: String,
     val correctOption: String
+)
+@Serializable
+data class RankingItem(
+    @SerialName("username") val username: String,
+    @SerialName("score") val score: Int,
+    @SerialName("position") val position: Int? = null
 )

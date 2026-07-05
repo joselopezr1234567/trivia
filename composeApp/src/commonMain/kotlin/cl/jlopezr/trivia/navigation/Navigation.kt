@@ -22,7 +22,8 @@ import cl.jlopezr.trivia.login.presentation.LoginScreen
 import cl.jlopezr.trivia.registrer.presentation.RegisterScreen
 import cl.jlopezr.trivia.game.presentation.GameScreen
 import cl.jlopezr.trivia.game.presentation.TriviaViewModel
-import cl.jlopezr.trivia.shared.features.game.domain.repository.TriviaRepository
+import cl.jlopezr.trivia.ranking.presentation.RankingScreen
+import cl.jlopezr.trivia.ranking.presentation.RankingViewModel
 import cl.jlopezr.trivia.shared.features.user.data.UserRepository
 
 @Composable
@@ -46,7 +47,7 @@ fun AppNavigation() {
             )
         }
 
-        // 2. Pantalla: Olvidé Contraseña (Ingresar Teléfono)
+        // 2. Pantalla: Olvidé Contraseña
         composable("forgot_password") {
             val repository = ForgotPasswordRepositoryImpl()
             val validateUseCase = ValidatePhoneUseCase(repository)
@@ -70,7 +71,7 @@ fun AppNavigation() {
             )
         }
 
-        // 3. Pantalla: Reset de Contraseña (Validar código y nueva clave)
+        // 3. Pantalla: Reset de Contraseña
         composable(
             route = "reset_password/{phone}",
             arguments = listOf(navArgument("phone") { type = NavType.StringType })
@@ -108,20 +109,19 @@ fun AppNavigation() {
             RegisterScreen(onNavigateToLogin = { navController.popBackStack() })
         }
 
+        // 5. Home
         composable("home") {
             val repository = TriviaRepositoryImpl()
             val getQuestionsUseCase = GetQuestionsUseCase(repository)
-            // Instanciamos el repositorio de usuario para la sincronización SQL
-            val userRepository = cl.jlopezr.trivia.shared.features.user.data.UserRepository()
+            val userRepository = UserRepository()
 
             val homeViewModel = viewModel<HomeViewModel> {
                 HomeViewModel(getQuestionsUseCase, userRepository)
             }
 
-            // 🔥 REFRESCAR PROGRESO AL VOLVER:
             LaunchedEffect(Unit) {
                 homeViewModel.loadUserProgress()
-                homeViewModel.syncFromCloud() // Intenta traer puntos nuevos desde el SQL al entrar
+                homeViewModel.syncFromCloud()
             }
 
             HomeScreen(
@@ -133,7 +133,7 @@ fun AppNavigation() {
             )
         }
 
-        // 6. GAME SCREEN (Donde ocurre la trivia y las animaciones)
+        // 6. Game Screen
         composable(
             route = "game/{category}/{difficulty}",
             arguments = listOf(
@@ -142,12 +142,9 @@ fun AppNavigation() {
             )
         ) { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "General"
-
-            // Repositorios necesarios
             val triviaRepository = cl.jlopezr.trivia.shared.features.game.domain.repository.TriviaRepository()
-            val userRepository = cl.jlopezr.trivia.shared.features.user.data.UserRepository()
+            val userRepository = UserRepository()
 
-            // Pasamos ambos repositorios al ViewModel
             val gameViewModel = viewModel<TriviaViewModel> {
                 TriviaViewModel(triviaRepository, userRepository)
             }
@@ -158,16 +155,18 @@ fun AppNavigation() {
 
             GameScreen(
                 category = category,
-                onBack = {
-                    navController.popBackStack()
-                },
+                onBack = { navController.popBackStack() },
                 viewModel = gameViewModel
             )
         }
 
-        // 7. RANKING
+        // 7. Ranking
         composable("ranking") {
-            // Aquí iría tu pantalla de RankingScreen(onBack = { navController.popBackStack() })
+            val rankingViewModel = viewModel<RankingViewModel>()
+            RankingScreen(
+                viewModel = rankingViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

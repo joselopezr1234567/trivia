@@ -1,6 +1,7 @@
 package cl.jlopezr.server
 
 import cl.jlopezr.trivia.shared.core.network.model.*
+import cl.jlopezr.trivia.core.network.model.RankingItem
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
@@ -214,6 +215,41 @@ fun main() {
                     } catch (e: Exception) {
                         println("ERROR [TRIVIA]: ${e.message}")
                         call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Unknown error")))
+                    }
+                }
+            }
+
+            // --- RUTA DE RANKING ---
+            route("/ranking") {
+                get {
+                    println("LOG [RANKING]: Consultando ranking global")
+                    try {
+                        val ranking = transaction {
+                            // Usamos leftJoin para que aparezcan todos los usuarios aunque no tengan puntos aún
+                            UsersTable
+                                .leftJoin(UserPointsTable, { email }, { userEmail })
+                                .leftJoin(UserLevelsTable, { UsersTable.email }, { UserLevelsTable.userEmail })
+                                .slice(
+                                    UsersTable.username,
+                                    UserPointsTable.totalPoints,
+                                    UserLevelsTable.currentLevel
+                                )
+                                .selectAll()
+                                .orderBy(UserPointsTable.totalPoints to SortOrder.DESC_NULLS_LAST)
+                                .limit(20)
+                                .mapIndexed { index, row ->
+                                    RankingItem(
+                                        username = row[UsersTable.username],
+                                        score = row.getOrNull(UserPointsTable.totalPoints) ?: 0,
+                                        position = index + 1
+                                    )
+                                }
+                        }
+                        call.respond(HttpStatusCode.OK, ranking)
+                    } catch (e: Exception) {
+                        println("ERROR [RANKING]: ${e.message}")
+                        e.printStackTrace()
+                        call.respond(HttpStatusCode.InternalServerError, emptyList<RankingItem>())
                     }
                 }
             }

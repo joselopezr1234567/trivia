@@ -45,6 +45,7 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            implementation(project(":shared"))
         }
         androidMain.dependencies {
             val ktorVersion = "3.1.0"
@@ -89,12 +90,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
-dependencies {
-    implementation(project(":shared"))
+// Elimina el bloque dependencies fuera de kotlin si no es necesario o asegúrate de que esté vacío
 
-
-
-}
 
 
 

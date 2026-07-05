@@ -9,6 +9,7 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.SerialName // Asegúrate de tener este import
+import cl.jlopezr.trivia.core.network.model.RankingItem
 
 @Serializable
 data class LoginRequest(
@@ -60,5 +61,24 @@ suspend fun login(user: String, pass: String): Boolean {
         println("❌ ERROR DE RED O SERIALIZACIÓN: ${e.message}")
         // Si el error persiste pero sabemos que el servidor envió "true", forzamos el true para que navegues
         if (e.message?.contains("success") == true) true else false
+    }
+}
+
+// Agrega esto a tu archivo de red
+suspend fun fetchRanking(): List<RankingItem> {
+    return try {
+        val response = client.get("http://10.0.2.2:8080/ranking") {
+            contentType(ContentType.Application.Json)
+        }
+
+        if (response.status == HttpStatusCode.OK) {
+            // Ktor con kotlinx.serialization lo convierte a lista automáticamente
+            response.body<List<RankingItem>>()
+        } else {
+            emptyList()
+        }
+    } catch (e: Exception) {
+        println("❌ ERROR AL TRAER RANKING: ${e.message}")
+        emptyList()
     }
 }
