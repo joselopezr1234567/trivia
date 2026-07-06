@@ -2,6 +2,9 @@ package cl.jlopezr.server
 
 import cl.jlopezr.trivia.shared.core.network.model.*
 import cl.jlopezr.trivia.core.network.model.RankingItem
+import com.twilio.Twilio
+import com.twilio.rest.api.v2010.account.Message
+import com.twilio.type.PhoneNumber
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
@@ -32,8 +35,20 @@ object UsersTable : Table("users") {
     val password = varchar("password", 100)
     val phone = varchar("phone", 20)
     val createdAt = timestamp("created_at")
+    val verificationCode = varchar("verification_code", 10).nullable() // 🔥 Agregado
     override val primaryKey = PrimaryKey(id)
 }
+
+// ... (en los modelos @Serializable)
+@Serializable
+data class ForgotPasswordRequest(val phone: String)
+
+@Serializable
+data class ResetPasswordRequest(
+    val phone: String,
+    val code: String,
+    val newPassword: String
+)
 
 object UserPointsTable : Table("user_points") {
     val id = integer("id").autoIncrement()
@@ -102,6 +117,124 @@ fun main() {
                         call.respond(HttpStatusCode.BadRequest, LoginResponse(false, "Error: ${e.message}"))
                     }
                 }
+
+                post("/forgot-password") {
+                    try {
+                        val req = call.receive<ForgotPasswordRequest>()
+                        println("LOG [FORGOT]: Validando teléfono ${req.phone}")
+                        
+                        val code = (100000..999999).random().toString()
+                        
+                        val updated = transaction {
+                            UsersTable.update({ UsersTable.phone eq req.phone }) {
+                                it[verificationCode] = code
+                            }
+                        }
+                        
+                        if (updated > 0) {
+                            println("LOG [FORGOT]: Código generado para ${req.phone}: $code. Enviando SMS real...")
+                            
+                            // --- INTEGRACIÓN REAL CON TWILIO ---
+                            try {
+                                val accountSid = "AC76e5be6b1208c225bfe79b74f8f175ac"
+                                val authToken = "44ac29922e1345763a8a14a2f099530d"
+                                val fromPhone = "+14244765297"
+
+                                Twilio.init(accountSid, authToken)
+                                Message.creator(
+                                    PhoneNumber(req.phone),
+                                    PhoneNumber(fromPhone),
+                                    "Tu código de recuperación para TRIV-IA es: $code"
+                                ).create()
+                                
+                                println("✅ SMS enviado con éxito a ${req.phone}")
+                                call.respond(HttpStatusCode.OK, LoginResponse(true, "Código enviado por SMS"))
+                            } catch (smsError: Exception) {
+                                println("❌ ERROR AL ENVIAR SMS: ${smsError.message}")
+                                // Aun si falla el SMS, el código existe en la DB (para pruebas)
+                                call.respond(HttpStatusCode.OK, LoginResponse(true, "Código generado (Error en envío)"))
+                            }
+                        } else {
+                            call.respond(HttpStatusCode.NotFound, LoginResponse(false, "Teléfono no registrado"))
+                        }
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.BadRequest, LoginResponse(false, "Error: ${e.message}"))
+                    }
+                }
+
+                post("/reset-password") {
+                    try {
+                        val req = call.receive<ResetPasswordRequest>()
+                        println("LOG [RESET]: Intentando reset para ${req.phone} con código ${req.code}")
+                        
+                        val success = transaction {
+                            val user = UsersTable.selectAll()
+                                .where { (UsersTable.phone eq req.phone) and (UsersTable.verificationCode eq req.code) }
+                                .singleOrNull()
+                                
+                            if (user != null) {
+                                UsersTable.update({ UsersTable.phone eq req.phone }) {
+                                    it[password] = req.newPassword
+                                    it[verificationCode] = null // Limpiar código tras uso
+                                }
+                                true
+                            } else false
+                        }
+                        
+                        if (success) {
+                            call.respond(HttpStatusCode.OK, LoginResponse(true, "Contraseña actualizada"))
+                        } else {
+                            call.respond(HttpStatusCode.Unauthorized, LoginResponse(false, "Código inválido"))
+                        }
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.BadRequest, LoginResponse(false, "Error: ${e.message}"))
+                    }
+                }
+
+                post("/register") {
+                    try {
+                        val user = call.receive<UserRegisterRequest>()
+                        println("LOG [REGISTER]: Registrando a ${user.email}")
+
+                        val result = transaction {
+                            // 1. Verificar si ya existe el email
+                            val exists = UsersTable.selectAll().where { UsersTable.email eq user.email }.count() > 0
+                            if (exists) return@transaction "Email ya registrado"
+
+                            // 2. Insertar usuario
+                            UsersTable.insert {
+                                it[username] = user.username
+                                it[email] = user.email
+                                it[password] = user.password
+                                it[phone] = user.phone ?: ""
+                                it[createdAt] = Instant.now()
+                            }
+
+                            // 3. Inicializar puntos y nivel
+                            UserPointsTable.insert {
+                                it[userEmail] = user.email
+                                it[totalPoints] = 0
+                                it[updatedAt] = Instant.now()
+                            }
+                            UserLevelsTable.insert {
+                                it[userEmail] = user.email
+                                it[currentLevel] = 1
+                                it[updatedAt] = Instant.now()
+                            }
+
+                            null // Éxito
+                        }
+
+                        if (result == null) {
+                            call.respond(HttpStatusCode.Created, LoginResponse(true, "Usuario creado exitosamente"))
+                        } else {
+                            call.respond(HttpStatusCode.Conflict, LoginResponse(false, result))
+                        }
+                    } catch (e: Exception) {
+                        println("ERROR [REGISTER]: ${e.message}")
+                        call.respond(HttpStatusCode.BadRequest, LoginResponse(false, "Error: ${e.message}"))
+                    }
+                }
             }
 
             // --- RUTAS DE PROGRESO ---
@@ -121,7 +254,7 @@ fun main() {
                         call.respond(HttpStatusCode.OK, progress)
                     } catch (e: Exception) {
                         println("ERROR [GET PROGRESS]: ${e.message}")
-                        call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.message))
+                        call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
                     }
                 }
 

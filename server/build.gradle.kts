@@ -44,6 +44,9 @@ dependencies {
 
     // --- LOGS ---
     implementation("ch.qos.logback:logback-classic:1.4.14")
+
+    // --- TWILIO ---
+    implementation("com.twilio.sdk:twilio:10.1.0")
 }
 configurations.all {
     resolutionStrategy.eachDependency {
