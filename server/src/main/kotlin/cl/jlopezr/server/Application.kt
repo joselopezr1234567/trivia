@@ -1,5 +1,6 @@
 package cl.jlopezr.server
 
+import androidx.datastore.core.Message
 import cl.jlopezr.trivia.shared.core.network.model.*
 import cl.jlopezr.trivia.core.network.model.RankingItem
 import com.twilio.Twilio
@@ -134,11 +135,11 @@ fun main() {
                         if (updated > 0) {
                             println("LOG [FORGOT]: Código generado para ${req.phone}: $code. Enviando SMS real...")
                             
-                            // --- INTEGRACIÓN REAL CON TWILIO ---
+                            // --- INTEGRACIÓN REAL CON TWILIO (Usando variables de entorno) ---
                             try {
-                                val accountSid = "AC76e5be6b1208c225bfe79b74f8f175ac"
-                                val authToken = "44ac29922e1345763a8a14a2f099530d"
-                                val fromPhone = "+14244765297"
+                                val accountSid = System.getenv("TWILIO_ACCOUNT_SID") ?: throw Exception("Falta TWILIO_ACCOUNT_SID")
+                                val authToken = System.getenv("TWILIO_AUTH_TOKEN") ?: throw Exception("Falta TWILIO_AUTH_TOKEN")
+                                val fromPhone = System.getenv("TWILIO_PHONE_NUMBER") ?: throw Exception("Falta TWILIO_PHONE_NUMBER")
 
                                 Twilio.init(accountSid, authToken)
                                 Message.creator(
