@@ -55,6 +55,23 @@ fun GameScreen(
                             fontSize = 12.sp
                         )
                     }
+
+                    // --- RELOJ ---
+                    Box(contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            progress = viewModel.timeLeft / 10f,
+                            color = if (viewModel.timeLeft <= 3) Color.Red else Color.Cyan,
+                            strokeWidth = 4.dp,
+                            modifier = Modifier.size(50.dp)
+                        )
+                        Text(
+                            text = "${viewModel.timeLeft}",
+                            color = if (viewModel.timeLeft <= 3) Color.Red else Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                    }
+
                     Text("${viewModel.totalScore} Pts", color = Color.Cyan, fontWeight = FontWeight.Black)
                 }
 
@@ -133,6 +150,13 @@ fun GameScreen(
                                 color = Color.Yellow,
                                 // Ahora muestra el nivel como número dinámicamente
                                 subTitle = "Subiste al Nivel ${viewModel.currentLevel}"
+                            )
+                        }
+                        FeedbackType.TIEMPO_AGOTADO -> {
+                            FeedbackContent(
+                                title = "¡TIEMPO AGOTADO!",
+                                color = Color.Red,
+                                subTitle = "La respuesta correcta era: ${ (state as? TriviaUiState.Success)?.question?.let { it.options[it.correctIndex] } }\n\n¡Inténtalo nuevamente!"
                             )
                         }
                         null -> {}

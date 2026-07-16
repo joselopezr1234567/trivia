@@ -24,7 +24,7 @@ sealed interface TriviaUiState {
     data class Error(val message: String) : TriviaUiState
 }
 
-enum class FeedbackType { CORRECTO, INCORRECTO, SUBIO_NIVEL }
+enum class FeedbackType { CORRECTO, INCORRECTO, SUBIO_NIVEL, TIEMPO_AGOTADO }
 
 class TriviaViewModel(
     private val repository: TriviaRepository,
@@ -45,6 +45,11 @@ class TriviaViewModel(
     var showRewardedPrompt by mutableStateOf(false)
         private set
 
+    var timeLeft by mutableStateOf(10)
+        private set
+
+    private var timerJob: kotlinx.coroutines.Job? = null
+
     var consecutiveCorrect by mutableStateOf(0)
         private set
 
@@ -54,7 +59,25 @@ class TriviaViewModel(
     var currentLevel by mutableStateOf(ProgressStorage.currentLevel)
         private set
 
-    fun loadQuestion(category: String) {
+    fun startTimer(category: String, onGameOver: () -> Unit) {
+        timerJob?.cancel()
+        timeLeft = 10
+        timerJob = viewModelScope.launch {
+            while (timeLeft > 0) {
+                delay(1000)
+                if (!isAnswerSelected) {
+                    timeLeft--
+                } else {
+                    break
+                }
+            }
+            if (timeLeft == 0 && !isAnswerSelected) {
+                processAnswer(isCorrect = false, category = category, onGameOver = onGameOver)
+            }
+        }
+    }
+
+    fun loadQuestion(category: String, onGameOver: () -> Unit = {}) {
         viewModelScope.launch {
             _uiState.value = TriviaUiState.Loading
             isAnswerSelected = false // Resetear flag al cargar nueva pregunta
@@ -81,6 +104,9 @@ class TriviaViewModel(
 
                         askedQuestions.add(result.question)
                         _uiState.value = TriviaUiState.Success(randomizedResult)
+                        
+                        // Iniciar el temporizador
+                        startTimer(category, onGameOver)
                     }
                     .onFailure { error ->
                         _uiState.value = TriviaUiState.Error(error.message ?: "Error de red")
@@ -99,8 +125,11 @@ class TriviaViewModel(
         category: String,
         onGameOver: () -> Unit
     ) {
-        if (isAnswerSelected) return // BLOQUEO DE SELECCIÓN MÚLTIPLE
+        if (isAnswerSelected && timeLeft > 0) return // BLOQUEO DE SELECCIÓN MÚLTIPLE
+        
+        val wasTimeOut = timeLeft == 0 && !isAnswerSelected
         isAnswerSelected = true
+        timerJob?.cancel() // Detener el reloj
 
         viewModelScope.launch {
             if (isCorrect) {
@@ -130,10 +159,10 @@ class TriviaViewModel(
 
                 delay(3500) // Tiempo para ver el feedback
                 showFeedback = null
-                loadQuestion(category)
+                loadQuestion(category, onGameOver)
 
             } else {
-                showFeedback = FeedbackType.INCORRECTO
+                showFeedback = if (wasTimeOut) FeedbackType.TIEMPO_AGOTADO else FeedbackType.INCORRECTO
                 delay(5500) // Tiempo extra para leer la explicación de la respuesta correcta
                 showFeedback = null
                 saveProgress()
