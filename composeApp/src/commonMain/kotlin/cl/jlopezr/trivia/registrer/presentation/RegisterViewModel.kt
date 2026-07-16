@@ -27,12 +27,15 @@ class RegisterViewModel(
             // 1. Mostrar estado de carga
             _uiState.update { it.copy(isLoading = true, error = null) }
 
+            val cleanEmail = email.trim() // 🔥 Limpieza
+            val cleanPass = password.trim() // 🔥 Limpieza
+
             // 2. Preparar los datos para el servidor
             val request = UserRegisterRequest(
-                username = fullName,
-                email = email,
-                password = password,
-                phone = phone
+                username = fullName.trim(),
+                email = cleanEmail,
+                password = cleanPass,
+                phone = phone.trim()
             )
 
             // 3. Llamada real al repositorio (conecta con Ktor)

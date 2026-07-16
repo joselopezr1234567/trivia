@@ -40,8 +40,8 @@ class LoginViewModel(
     }
 
     fun login() {
-        val currentEmail = state.value.email
-        val currentPassword = state.value.password
+        val currentEmail = state.value.email.trim() // 🔥 Limpiamos espacios
+        val currentPassword = state.value.password.trim() // 🔥 Limpiamos espacios
 
         if (currentEmail.isBlank() || currentPassword.isBlank()) {
             _state.update { it.copy(errorMessage = "Por favor, completa todos los campos") }

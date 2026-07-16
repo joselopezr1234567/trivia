@@ -55,6 +55,9 @@ kotlin {
             implementation("io.insert-koin:koin-android:4.0.0")
             implementation("io.insert-koin:koin-androidx-compose:4.0.0")
             implementation("io.ktor:ktor-client-cio:${ktorVersion}")
+            
+            // Google AdMob SDK
+            implementation("com.google.android.gms:play-services-ads:23.6.0")
         }
     }
 }

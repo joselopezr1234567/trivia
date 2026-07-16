@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import cl.jlopezr.trivia.shared.features.user.data.UserRepository
 import cl.jlopezr.trivia.shared.core.data.UserSession
+import cl.jlopezr.trivia.core.ads.getAdsManager
 
 sealed interface TriviaUiState {
     object Loading : TriviaUiState
@@ -38,6 +39,12 @@ class TriviaViewModel(
 
     private val askedQuestions = mutableListOf<String>()
 
+    var questionsCountSinceLastAd by mutableStateOf(0)
+        private set
+
+    var showRewardedPrompt by mutableStateOf(false)
+        private set
+
     var consecutiveCorrect by mutableStateOf(0)
         private set
 
@@ -50,6 +57,7 @@ class TriviaViewModel(
     fun loadQuestion(category: String) {
         viewModelScope.launch {
             _uiState.value = TriviaUiState.Loading
+            isAnswerSelected = false // Resetear flag al cargar nueva pregunta
             try {
                 val request = TriviaRequest(
                     category,
@@ -59,8 +67,20 @@ class TriviaViewModel(
 
                 repository.getNewQuestion(request)
                     .onSuccess { result ->
+                        // --- ALEATORIEDAD POR CÓDIGO ---
+                        val originalOptions = result.options
+                        val correctAnswer = originalOptions[result.correctIndex]
+                        
+                        val shuffledOptions = originalOptions.shuffled()
+                        val newCorrectIndex = shuffledOptions.indexOf(correctAnswer)
+                        
+                        val randomizedResult = result.copy(
+                            options = shuffledOptions,
+                            correctIndex = newCorrectIndex
+                        )
+
                         askedQuestions.add(result.question)
-                        _uiState.value = TriviaUiState.Success(result)
+                        _uiState.value = TriviaUiState.Success(randomizedResult)
                     }
                     .onFailure { error ->
                         _uiState.value = TriviaUiState.Error(error.message ?: "Error de red")
@@ -71,11 +91,17 @@ class TriviaViewModel(
         }
     }
 
+    var isAnswerSelected by mutableStateOf(false)
+        private set
+
     fun processAnswer(
         isCorrect: Boolean,
         category: String,
         onGameOver: () -> Unit
     ) {
+        if (isAnswerSelected) return // BLOQUEO DE SELECCIÓN MÚLTIPLE
+        isAnswerSelected = true
+
         viewModelScope.launch {
             if (isCorrect) {
                 val pointsToAdd = when {
@@ -85,6 +111,12 @@ class TriviaViewModel(
                 }
                 totalScore += pointsToAdd
                 consecutiveCorrect += 1
+                questionsCountSinceLastAd += 1
+
+                if (questionsCountSinceLastAd >= 3) {
+                    showRewardedPrompt = true
+                    questionsCountSinceLastAd = 0
+                }
 
                 if (consecutiveCorrect >= 3) {
                     upgradeLevel()
@@ -96,16 +128,22 @@ class TriviaViewModel(
 
                 saveProgress()
 
-                delay(2000)
+                delay(3500) // Tiempo para ver el feedback
                 showFeedback = null
                 loadQuestion(category)
 
             } else {
                 showFeedback = FeedbackType.INCORRECTO
-                delay(2000)
+                delay(5500) // Tiempo extra para leer la explicación de la respuesta correcta
                 showFeedback = null
                 saveProgress()
-                onGameOver()
+
+                // Mostrar anuncio automático al perder
+                getAdsManager().showInterstitial(
+                    onAdClosed = {
+                        onGameOver()
+                    }
+                )
             }
         }
     }
@@ -140,5 +178,19 @@ class TriviaViewModel(
 
     fun saveFinalScore() {
         saveProgress()
+    }
+
+    /**
+     * Añade puntos extra (ej: por ver un anuncio)
+     */
+    fun addBonusPoints(points: Int) {
+        totalScore += points
+        // Sumar ganancia promedio (ej: $0.01 / 2 = $0.005)
+        ProgressStorage.totalEarnings += 0.005
+        saveProgress()
+    }
+
+    fun dismissRewardedPrompt() {
+        showRewardedPrompt = false
     }
 }

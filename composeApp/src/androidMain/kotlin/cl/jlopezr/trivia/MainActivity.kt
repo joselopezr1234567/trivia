@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import cl.jlopezr.trivia.di.appModule
+import com.google.android.gms.ads.MobileAds
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.*
 import org.koin.core.context.startKoin
@@ -19,6 +20,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         Log.d("TRIVIA_APP", "Iniciando MainActivity...")
+
+        // Inicializar AdMob
+        MobileAds.initialize(this) { status ->
+            Log.d("TRIVIA_APP", "AdMob inicializado: $status")
+        }
 
         try {
             Log.d("TRIVIA_APP", "Intentando iniciar Koin...")

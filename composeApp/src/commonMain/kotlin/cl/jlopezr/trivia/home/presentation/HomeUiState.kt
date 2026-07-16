@@ -6,5 +6,6 @@ data class HomeUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val totalScore: Int = 0,
-    val currentLevel: Int = 1 // Antes era String, ahora es Int
+    val currentLevel: Int = 1,
+    val totalEarnings: Double = 0.0
 )

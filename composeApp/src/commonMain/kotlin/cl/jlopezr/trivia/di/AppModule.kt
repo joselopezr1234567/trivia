@@ -15,8 +15,15 @@ import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
+
+// Importamos el platformModule que es diferente para cada plataforma
+expect val platformModule: org.koin.core.module.Module
 
 val appModule = module {
+    // Incluir el módulo de plataforma (donde está AdsManager)
+    includes(platformModule)
 
     // 1. Cliente HTTP (Configurado para ignorar claves desconocidas del JSON)
     single {

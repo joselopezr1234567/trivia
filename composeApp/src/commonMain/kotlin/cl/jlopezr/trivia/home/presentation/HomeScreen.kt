@@ -201,8 +201,35 @@ fun HomeScreen(
                                     Text("PUNTOS", style = outlineStyle.copy(fontSize = 12.sp, fontWeight = FontWeight.Light))
                                 }
                                 Text(
-                                    text = "${state.totalScore}", // Asegúrate de tener esto en tu HomeUiState
+                                    text = "${state.totalScore}",
                                     style = outlineStyle.copy(fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color.Cyan)
+                                )
+                            }
+
+                            VerticalDivider(color = Color.White.copy(alpha = 0.2f), modifier = Modifier.height(40.dp))
+
+                            // --- NUEVO: PREMIO ---
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.EmojiEvents,
+                                        contentDescription = null,
+                                        tint = Color.Green,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(
+                                        text = "PREMIO",
+                                        style = outlineStyle.copy(fontSize = 12.sp, fontWeight = FontWeight.Light)
+                                    )
+                                }
+                                Text(
+                                    text = "$${((state.totalEarnings * 1000).toInt() / 1000.0)}",
+                                    style = outlineStyle.copy(
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.Green
+                                    )
                                 )
                             }
                         }

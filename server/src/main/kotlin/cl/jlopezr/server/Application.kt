@@ -1,31 +1,44 @@
 package cl.jlopezr.server
 
-import androidx.datastore.core.Message
-import cl.jlopezr.trivia.shared.core.network.model.*
 import cl.jlopezr.trivia.core.network.model.RankingItem
-import com.twilio.Twilio
-import com.twilio.rest.api.v2010.account.Message
-import com.twilio.type.PhoneNumber
+import cl.jlopezr.trivia.shared.core.network.model.TriviaRequest
+import cl.jlopezr.trivia.shared.core.network.model.TriviaResponse
+import cl.jlopezr.trivia.shared.core.network.model.UserLoginRequest
+import cl.jlopezr.trivia.shared.core.network.model.UserRegisterRequest
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
+import com.twilio.Twilio
+import com.twilio.rest.api.v2010.account.Message
+import com.twilio.type.PhoneNumber
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.*
+import io.ktor.server.application.call
+import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
-import io.ktor.server.routing.*
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.javatime.timestamp
+import org.jetbrains.exposed.sql.leftJoin
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import java.time.Instant
 
 // 1. Mapeo de Tablas
@@ -328,7 +341,9 @@ fun main() {
                                         role = ChatRole.System,
                                         content = """
                                             Eres un generador de trivias experto. Responde UNICAMENTE con JSON.
-                                            FORMATO: {"question": "...", "options": ["...", "...", "...", "..."], "correctIndex": 0}
+                                            FORMATO: {"question": "...", "options": ["...", "...", "...", "..."], "correctIndex": 0, "explanation": "..."}
+                                            CRITICO: El campo "correctIndex" DEBE ser aleatorio entre 0 y 3. No pongas siempre la respuesta correcta en la misma posicion.
+                                            CRITICO: El campo "explanation" debe ser una breve explicacion de por qué esa es la respuesta correcta.
                                             $historyBlock
                                         """.trimIndent()
                                     ),

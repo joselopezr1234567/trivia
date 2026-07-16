@@ -7,4 +7,5 @@ package cl.jlopezr.trivia.shared.core.data
 object ProgressStorage {
     var totalScore: Int = 0
     var currentLevel: Int = 1
+    var totalEarnings: Double = 0.0
 }

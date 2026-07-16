@@ -42,5 +42,6 @@ data class TriviaRequest(
 data class TriviaResponse(
     val question: String,
     val options: List<String>,
-    val correctIndex: Int
+    val correctIndex: Int,
+    val explanation: String = "" // 🔥 Agregamos explicación
 )

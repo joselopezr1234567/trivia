@@ -14,6 +14,7 @@ repositories {
 }
 
 dependencies {
+    // implementation(libs.androidx.datastore.core.android) // 🔥 ELIMINADO: Causa error en el servidor JVM
     val ktorVersion = "2.3.12"
 
     implementation(project(":shared"))

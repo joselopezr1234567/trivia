@@ -38,7 +38,8 @@ class HomeViewModel(
             _uiState.update {
                 it.copy(
                     totalScore = ProgressStorage.totalScore,
-                    currentLevel = ProgressStorage.currentLevel
+                    currentLevel = ProgressStorage.currentLevel,
+                    totalEarnings = ProgressStorage.totalEarnings
                 )
             }
         }

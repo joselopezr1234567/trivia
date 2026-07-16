@@ -2,8 +2,11 @@ package cl.jlopezr.trivia.game.presentation
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,8 +19,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cl.jlopezr.trivia.core.ads.getAdsManager
 import cl.jlopezr.trivia.core.components.TriviaBackgroundContainer
 import cl.jlopezr.trivia.core.components.TriviaButton
+import cl.jlopezr.trivia.shared.core.data.ProgressStorage
+
 
 @Composable
 fun GameScreen(
@@ -38,9 +44,17 @@ fun GameScreen(
                 // HUD: Puntos y Nivel
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Nivel: ${viewModel.currentLevel}", color = Color.Yellow, fontWeight = FontWeight.Bold)
+                    Column {
+                        Text("Nivel: ${viewModel.currentLevel}", color = Color.Yellow, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Premio: $${(ProgressStorage.totalEarnings * 1000).toInt() / 1000.0}",
+                            color = Color.Green,
+                            fontSize = 12.sp
+                        )
+                    }
                     Text("${viewModel.totalScore} Pts", color = Color.Cyan, fontWeight = FontWeight.Black)
                 }
 
@@ -65,6 +79,7 @@ fun GameScreen(
                             trivia.options.forEachIndexed { index, option ->
                                 TriviaButton(
                                     text = option,
+                                    enabled = !viewModel.isAnswerSelected, // DESHABILITAR SI YA ELIGIÓ
                                     onClick = {
                                         viewModel.processAnswer(
                                             isCorrect = index == trivia.correctIndex,
@@ -109,7 +124,7 @@ fun GameScreen(
                             FeedbackContent(
                                 title = "¡INCORRECTO!",
                                 color = Color.Red,
-                                subTitle = "¡Vuelve a intentarlo!"
+                                subTitle = "La respuesta correcta era: ${ (state as? TriviaUiState.Success)?.question?.let { it.options[it.correctIndex] } }\n\n${ (state as? TriviaUiState.Success)?.question?.explanation }"
                             )
                         }
                         FeedbackType.SUBIO_NIVEL -> {
@@ -121,6 +136,84 @@ fun GameScreen(
                             )
                         }
                         null -> {}
+                    }
+                }
+            }
+
+            // --- CAPA 3: PROMPT DE VIDEO RECOMPENSADO ---
+            if (viewModel.showRewardedPrompt) {
+                val outlineStyle = TextStyle(
+                    color = Color.White,
+                    shadow = Shadow(
+                        color = Color.Black,
+                        offset = Offset(2f, 2f),
+                        blurRadius = 4f
+                    )
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.8f))
+                        .clickable { /* Bloquear clics al fondo */ },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth(0.85f)
+                            .padding(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+                        shape = RoundedCornerShape(24.dp),
+                        border = BorderStroke(2.dp, Color.Yellow)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "✨ BONUS EXTRA ✨",
+                                style = outlineStyle.copy(
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.Yellow
+                                ),
+                                textAlign = TextAlign.Center
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "¿Quieres ganar 50 PUNTOS EXTRAS viendo un video corto?",
+                                style = outlineStyle.copy(fontSize = 18.sp),
+                                textAlign = TextAlign.Center
+                            )
+
+                            Spacer(modifier = Modifier.height(32.dp))
+
+                            TriviaButton(
+                                text = "¡SÍ, VER VIDEO!",
+                                onClick = {
+                                    viewModel.dismissRewardedPrompt()
+                                    getAdsManager().showRewarded(
+                                        onRewardEarned = { amount ->
+                                            viewModel.addBonusPoints(50)
+                                        },
+                                        onAdClosed = { }
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            TextButton(onClick = { viewModel.dismissRewardedPrompt() }) {
+                                Text(
+                                    text = "AHORA NO, GRACIAS",
+                                    color = Color.Gray,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
             }
