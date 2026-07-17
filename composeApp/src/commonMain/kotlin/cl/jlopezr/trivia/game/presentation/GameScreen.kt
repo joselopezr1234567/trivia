@@ -259,11 +259,14 @@ fun GameScreen(
                                 text = "¡SÍ, VER VIDEO!",
                                 onClick = {
                                     viewModel.dismissRewardedPrompt()
+                                    getAudioManager().pauseBackgroundMusic() // Pausar para video premiado
                                     getAdsManager().showRewarded(
                                         onRewardEarned = { amount ->
                                             viewModel.addBonusPoints(50)
                                         },
-                                        onAdClosed = { }
+                                        onAdClosed = { 
+                                            getAudioManager().resumeBackgroundMusic() // Resumir al cerrar
+                                        }
                                     )
                                 },
                                 modifier = Modifier.fillMaxWidth()

@@ -142,10 +142,12 @@ class TriviaViewModel(
         val wasTimeOut = timeLeft == 0 && !isAnswerSelected
         isAnswerSelected = true
         timerJob?.cancel() // Detener el reloj
+        getAudioManager().stopTickSound() // 🔥 DETENER TICK-TAC INMEDIATAMENTE
         getAudioManager().restoreVolume() // 🔥 RESTAURAMOS VOLUMEN AL TERMINAR PREGUNTA
 
         viewModelScope.launch {
             if (isCorrect) {
+                // ... (mantener lógica existente)
                 val pointsToAdd = when {
                     currentLevel <= 2 -> 1
                     currentLevel <= 5 -> 2
@@ -180,9 +182,13 @@ class TriviaViewModel(
                 showFeedback = null
                 saveProgress()
 
+                // Pausar música para el anuncio
+                getAudioManager().pauseBackgroundMusic()
+
                 // Mostrar anuncio automático al perder
                 getAdsManager().showInterstitial(
                     onAdClosed = {
+                        getAudioManager().resumeBackgroundMusic() // Resumir al volver
                         onGameOver()
                     }
                 )

@@ -102,6 +102,20 @@ class AndroidAudioManager(private val context: Context) : AudioManager, KoinComp
         mediaPlayer = null
     }
 
+    override fun pauseBackgroundMusic() {
+        if (mediaPlayer?.isPlaying == true) {
+            Log.d("AUDIO_DEBUG", "Pausando música para anuncio...")
+            mediaPlayer?.pause()
+        }
+    }
+
+    override fun resumeBackgroundMusic() {
+        if (mediaPlayer != null && !mediaPlayer!!.isPlaying && !isMuted) {
+            Log.d("AUDIO_DEBUG", "Resumiendo música tras anuncio...")
+            mediaPlayer?.start()
+        }
+    }
+
     override fun playTickSound() {
         if (tickSoundId != 0 && !isMuted) {
             Log.d("AUDIO_DEBUG", "Reproduciendo TICK...")
@@ -110,6 +124,11 @@ class AndroidAudioManager(private val context: Context) : AudioManager, KoinComp
         } else {
             if (tickSoundId == 0) Log.w("AUDIO_DEBUG", "Ignorando tick: tickSoundId es 0")
         }
+    }
+
+    override fun stopTickSound() {
+        Log.d("AUDIO_DEBUG", "Deteniendo sonidos de TICK")
+        soundPool.autoPause() // Detiene todos los sonidos activos en el pool
     }
 }
 

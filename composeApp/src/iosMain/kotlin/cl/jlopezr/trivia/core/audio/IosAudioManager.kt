@@ -8,7 +8,16 @@ class IosAudioManager : AudioManager {
     override fun stopBackgroundMusic() {
     }
 
+    override fun pauseBackgroundMusic() {
+    }
+
+    override fun resumeBackgroundMusic() {
+    }
+
     override fun playTickSound() {
+    }
+
+    override fun stopTickSound() {
     }
 
     override fun setMuted(muted: Boolean) {
