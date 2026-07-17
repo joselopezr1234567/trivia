@@ -1,14 +1,39 @@
 package cl.jlopezr.trivia.game.presentation
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeMute
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -20,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.jlopezr.trivia.core.ads.getAdsManager
+import cl.jlopezr.trivia.core.audio.getAudioManager
 import cl.jlopezr.trivia.core.components.TriviaBackgroundContainer
 import cl.jlopezr.trivia.core.components.TriviaButton
 import cl.jlopezr.trivia.shared.core.data.ProgressStorage
@@ -33,6 +59,10 @@ fun GameScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val feedback = viewModel.showFeedback // Observamos el estado de animación
+
+    LaunchedEffect(category) {
+        viewModel.loadQuestion(category, onGameOver = onBack)
+    }
 
     TriviaBackgroundContainer {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -73,6 +103,14 @@ fun GameScreen(
                     }
 
                     Text("${viewModel.totalScore} Pts", color = Color.Cyan, fontWeight = FontWeight.Black)
+
+                    IconButton(onClick = { viewModel.toggleMute() }) {
+                        Icon(
+                            imageVector = if (viewModel.isMuted) Icons.AutoMirrored.Filled.VolumeMute else Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = "Mute Toggle",
+                            tint = Color.White
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -111,7 +149,10 @@ fun GameScreen(
                     }
                     is TriviaUiState.Error -> {
                         Text("Error: ${uiState.message}", color = Color.Red)
-                        TriviaButton(text = "REINTENTAR", onClick = { viewModel.loadQuestion(category) })
+                        TriviaButton(
+                            text = "REINTENTAR",
+                            onClick = { viewModel.loadQuestion(category, onGameOver = onBack) }
+                        )
                     }
                 }
             }

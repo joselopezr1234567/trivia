@@ -17,6 +17,7 @@ import kotlinx.coroutines.delay
 import cl.jlopezr.trivia.shared.features.user.data.UserRepository
 import cl.jlopezr.trivia.shared.core.data.UserSession
 import cl.jlopezr.trivia.core.ads.getAdsManager
+import cl.jlopezr.trivia.core.audio.getAudioManager
 
 sealed interface TriviaUiState {
     object Loading : TriviaUiState
@@ -48,6 +49,9 @@ class TriviaViewModel(
     var timeLeft by mutableStateOf(10)
         private set
 
+    var isMuted by mutableStateOf(false)
+        private set
+
     private var timerJob: kotlinx.coroutines.Job? = null
 
     var consecutiveCorrect by mutableStateOf(0)
@@ -59,25 +63,33 @@ class TriviaViewModel(
     var currentLevel by mutableStateOf(ProgressStorage.currentLevel)
         private set
 
+    fun toggleMute() {
+        isMuted = !isMuted
+        getAudioManager().setMuted(isMuted)
+    }
+
     fun startTimer(category: String, onGameOver: () -> Unit) {
         timerJob?.cancel()
         timeLeft = 10
+        getAudioManager().lowerVolume() // 🔥 BAJAMOS VOLUMEN AL EMPEZAR PREGUNTA
         timerJob = viewModelScope.launch {
             while (timeLeft > 0) {
-                delay(1000)
                 if (!isAnswerSelected) {
+                    getAudioManager().playTickSound() // 🔥 SONIDO DE RELOJ CADA SEGUNDO
+                    delay(1000)
                     timeLeft--
                 } else {
                     break
                 }
             }
             if (timeLeft == 0 && !isAnswerSelected) {
+                // Al llegar a 0, ejecutamos processAnswer indicando que falló por tiempo
                 processAnswer(isCorrect = false, category = category, onGameOver = onGameOver)
             }
         }
     }
 
-    fun loadQuestion(category: String, onGameOver: () -> Unit = {}) {
+    fun loadQuestion(category: String, onGameOver: () -> Unit) {
         viewModelScope.launch {
             _uiState.value = TriviaUiState.Loading
             isAnswerSelected = false // Resetear flag al cargar nueva pregunta
@@ -105,7 +117,7 @@ class TriviaViewModel(
                         askedQuestions.add(result.question)
                         _uiState.value = TriviaUiState.Success(randomizedResult)
                         
-                        // Iniciar el temporizador
+                        // Iniciar el temporizador pasando el callback de fin de juego
                         startTimer(category, onGameOver)
                     }
                     .onFailure { error ->
@@ -130,6 +142,7 @@ class TriviaViewModel(
         val wasTimeOut = timeLeft == 0 && !isAnswerSelected
         isAnswerSelected = true
         timerJob?.cancel() // Detener el reloj
+        getAudioManager().restoreVolume() // 🔥 RESTAURAMOS VOLUMEN AL TERMINAR PREGUNTA
 
         viewModelScope.launch {
             if (isCorrect) {

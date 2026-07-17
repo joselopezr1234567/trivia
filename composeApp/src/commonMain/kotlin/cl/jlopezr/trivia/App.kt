@@ -7,15 +7,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cl.jlopezr.trivia.core.ads.getAdsManager
+import cl.jlopezr.trivia.core.audio.getAudioManager
 import cl.jlopezr.trivia.navigation.AppNavigation
 
 // Eliminamos @Preview y su import para limpiar el archivo
 @Composable
 fun App() {
+    // --- MÚSICA DE FONDO GLOBAL ---
+    LaunchedEffect(Unit) {
+        getAudioManager().playBackgroundMusic()
+    }
+
     MaterialTheme {
         Box(modifier = Modifier.fillMaxSize()) {
             // Contenedor principal con espacio para el banner

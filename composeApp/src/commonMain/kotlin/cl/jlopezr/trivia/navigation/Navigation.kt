@@ -155,7 +155,7 @@ fun AppNavigation() {
             }
 
             LaunchedEffect(category) {
-                gameViewModel.loadQuestion(category)
+                // Ya no cargamos aquí, lo hace el GameScreen pasando el callback
             }
 
             GameScreen(
