@@ -18,6 +18,7 @@ import cl.jlopezr.trivia.shared.features.user.data.UserRepository
 import cl.jlopezr.trivia.shared.core.data.UserSession
 import cl.jlopezr.trivia.core.ads.getAdsManager
 import cl.jlopezr.trivia.core.audio.getAudioManager
+import cl.jlopezr.trivia.getPlatform
 
 sealed interface TriviaUiState {
     object Loading : TriviaUiState
@@ -49,10 +50,13 @@ class TriviaViewModel(
     var timeLeft by mutableStateOf(10)
         private set
 
-    var isMuted by mutableStateOf(false)
+    var isMuted by mutableStateOf(ProgressStorage.isMuted) // 🔥 Sincronizado con el global
         private set
 
     private var timerJob: kotlinx.coroutines.Job? = null
+
+    private var lastCategory: String = ""
+    private var lastOnGameOver: (() -> Unit)? = null
 
     var consecutiveCorrect by mutableStateOf(0)
         private set
@@ -64,7 +68,8 @@ class TriviaViewModel(
         private set
 
     fun toggleMute() {
-        isMuted = !isMuted
+        ProgressStorage.isMuted = !ProgressStorage.isMuted
+        isMuted = ProgressStorage.isMuted
         getAudioManager().setMuted(isMuted)
     }
 
@@ -90,14 +95,20 @@ class TriviaViewModel(
     }
 
     fun loadQuestion(category: String, onGameOver: () -> Unit) {
+        this.lastCategory = category
+        this.lastOnGameOver = onGameOver
         viewModelScope.launch {
             _uiState.value = TriviaUiState.Loading
             isAnswerSelected = false // Resetear flag al cargar nueva pregunta
             try {
+                val currentLanguage = getPlatform().language
+                println("LOG [TRIVIA]: Solicitando trivia en idioma: $currentLanguage")
+                
                 val request = TriviaRequest(
-                    category,
-                    currentLevel.toString(),
-                    askedQuestions.toList()
+                    topic = category,
+                    difficulty = currentLevel.toString(),
+                    history = askedQuestions.toList(),
+                    language = currentLanguage
                 )
 
                 repository.getNewQuestion(request)
@@ -174,7 +185,10 @@ class TriviaViewModel(
 
                 delay(3500) // Tiempo para ver el feedback
                 showFeedback = null
-                loadQuestion(category, onGameOver)
+                
+                if (!showRewardedPrompt) {
+                    loadQuestion(category, onGameOver)
+                }
 
             } else {
                 showFeedback = if (wasTimeOut) FeedbackType.TIEMPO_AGOTADO else FeedbackType.INCORRECTO
@@ -240,5 +254,9 @@ class TriviaViewModel(
 
     fun dismissRewardedPrompt() {
         showRewardedPrompt = false
+        // Al cerrar el prompt (ya sea viendo el video o no), continuamos el juego
+        if (lastCategory.isNotEmpty() && lastOnGameOver != null) {
+            loadQuestion(lastCategory, lastOnGameOver!!)
+        }
     }
 }

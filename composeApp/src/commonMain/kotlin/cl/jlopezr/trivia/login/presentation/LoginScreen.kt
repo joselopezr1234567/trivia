@@ -25,9 +25,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import myapplication.composeapp.generated.resources.Res
-import myapplication.composeapp.generated.resources.btn_entrar
-import myapplication.composeapp.generated.resources.fondo
+import myapplication.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.androidx.compose.koinViewModel
 import kotlin.random.Random
 
@@ -85,7 +85,7 @@ fun LoginScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Iniciar Sesión",
+                        text = stringResource(Res.string.login_title),
                         style = outlineStyle.copy(
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold
@@ -98,7 +98,7 @@ fun LoginScreen(
                     TextField(
                         value = state.email,
                         onValueChange = { viewModel.onEmailChanged(it) },
-                        label = { Text("Email", style = outlineStyle.copy(fontSize = 14.sp)) },
+                        label = { Text(stringResource(Res.string.email_label), style = outlineStyle.copy(fontSize = 14.sp)) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         shape = RoundedCornerShape(12.dp),
                         textStyle = outlineStyle,
@@ -111,7 +111,7 @@ fun LoginScreen(
                     TextField(
                         value = state.password,
                         onValueChange = { viewModel.onPasswordChanged(it) },
-                        label = { Text("Contraseña", style = outlineStyle.copy(fontSize = 14.sp)) },
+                        label = { Text(stringResource(Res.string.password_label), style = outlineStyle.copy(fontSize = 14.sp)) },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         shape = RoundedCornerShape(12.dp),
@@ -134,9 +134,9 @@ fun LoginScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Text(text = "¿No tienes cuenta? ", style = outlineStyle)
+                        Text(text = stringResource(Res.string.no_account_text), style = outlineStyle)
                         Text(
-                            text = "Haz clic aquí",
+                            text = stringResource(Res.string.click_here),
                             style = outlineStyle.copy(fontWeight = FontWeight.Black),
                             modifier = Modifier.clickable { onNavigateToRegister() }
                         )
@@ -146,7 +146,7 @@ fun LoginScreen(
 
                     // Olvidé mi contraseña (Grande y con borde)
                     Text(
-                        text = "¿Se te olvidó la contraseña?",
+                        text = stringResource(Res.string.forgot_password_link),
                         modifier = Modifier.clickable { onNavigateToForgotPassword() },
                         style = outlineStyle.copy(
                             fontSize = 20.sp,
@@ -203,7 +203,7 @@ fun LoginAnimatedButton(state: LoginUiState, viewModel: LoginViewModel, textStyl
                 contentScale = ContentScale.FillBounds
             )
             Text(
-                text = "ENTRAR",
+                text = stringResource(Res.string.btn_login),
                 style = textStyle.copy(fontSize = 22.sp, fontWeight = FontWeight.Black)
             )
         }

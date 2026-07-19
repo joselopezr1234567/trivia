@@ -48,6 +48,8 @@ import cl.jlopezr.trivia.core.ads.getAdsManager
 import cl.jlopezr.trivia.core.audio.getAudioManager
 import cl.jlopezr.trivia.core.components.TriviaBackgroundContainer
 import cl.jlopezr.trivia.core.components.TriviaButton
+import org.jetbrains.compose.resources.stringResource
+import myapplication.composeapp.generated.resources.*
 import cl.jlopezr.trivia.shared.core.data.ProgressStorage
 
 
@@ -78,9 +80,9 @@ fun GameScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Nivel: ${viewModel.currentLevel}", color = Color.Yellow, fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.game_level_format, viewModel.currentLevel), color = Color.Yellow, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Premio: $${(ProgressStorage.totalEarnings * 1000).toInt() / 1000.0}",
+                            text = stringResource(Res.string.game_prize_format, ((ProgressStorage.totalEarnings * 1000).toInt() / 1000.0).toString()),
                             color = Color.Green,
                             fontSize = 12.sp
                         )
@@ -102,7 +104,11 @@ fun GameScreen(
                         )
                     }
 
-                    Text("${viewModel.totalScore} Pts", color = Color.Cyan, fontWeight = FontWeight.Black)
+                        Text(
+                            text = stringResource(Res.string.game_points_format, viewModel.totalScore),
+                            color = Color.Cyan,
+                            fontWeight = FontWeight.Black
+                        )
 
                     IconButton(onClick = { viewModel.toggleMute() }) {
                         Icon(
@@ -148,9 +154,9 @@ fun GameScreen(
                         }
                     }
                     is TriviaUiState.Error -> {
-                        Text("Error: ${uiState.message}", color = Color.Red)
+                        Text("${stringResource(Res.string.feedback_incorrect)}: ${uiState.message}", color = Color.Red)
                         TriviaButton(
-                            text = "REINTENTAR",
+                            text = stringResource(Res.string.btn_retry),
                             onClick = { viewModel.loadQuestion(category, onGameOver = onBack) }
                         )
                     }
@@ -173,31 +179,31 @@ fun GameScreen(
                     when (feedback) {
                         FeedbackType.CORRECTO -> {
                             FeedbackContent(
-                                title = "¡CORRECTO!",
+                                title = stringResource(Res.string.feedback_correct),
                                 color = Color.Green,
-                                subTitle = "¡Vas por buen camino!"
+                                subTitle = stringResource(Res.string.feedback_correct_msg)
                             )
                         }
                         FeedbackType.INCORRECTO -> {
                             FeedbackContent(
-                                title = "¡INCORRECTO!",
+                                title = stringResource(Res.string.feedback_incorrect),
                                 color = Color.Red,
-                                subTitle = "La respuesta correcta era: ${ (state as? TriviaUiState.Success)?.question?.let { it.options[it.correctIndex] } }\n\n${ (state as? TriviaUiState.Success)?.question?.explanation }"
+                                subTitle = stringResource(Res.string.feedback_incorrect_msg, (state as? TriviaUiState.Success)?.question?.let { it.options[it.correctIndex] } ?: "") + "\n\n${ (state as? TriviaUiState.Success)?.question?.explanation }"
                             )
                         }
                         FeedbackType.SUBIO_NIVEL -> {
                             FeedbackContent(
-                                title = "¡BIEN HECHO!",
+                                title = stringResource(Res.string.feedback_level_up),
                                 color = Color.Yellow,
                                 // Ahora muestra el nivel como número dinámicamente
-                                subTitle = "Subiste al Nivel ${viewModel.currentLevel}"
+                                subTitle = stringResource(Res.string.feedback_level_up_msg, viewModel.currentLevel)
                             )
                         }
                         FeedbackType.TIEMPO_AGOTADO -> {
                             FeedbackContent(
-                                title = "¡TIEMPO AGOTADO!",
+                                title = stringResource(Res.string.feedback_timeout),
                                 color = Color.Red,
-                                subTitle = "La respuesta correcta era: ${ (state as? TriviaUiState.Success)?.question?.let { it.options[it.correctIndex] } }\n\n¡Inténtalo nuevamente!"
+                                subTitle = stringResource(Res.string.feedback_timeout_msg)
                             )
                         }
                         null -> {}
@@ -236,7 +242,7 @@ fun GameScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "✨ BONUS EXTRA ✨",
+                                text = stringResource(Res.string.bonus_extra),
                                 style = outlineStyle.copy(
                                     fontSize = 24.sp,
                                     fontWeight = FontWeight.Black,
@@ -248,7 +254,7 @@ fun GameScreen(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             Text(
-                                text = "¿Quieres ganar 50 PUNTOS EXTRAS viendo un video corto?",
+                                text = stringResource(Res.string.rewarded_prompt_msg),
                                 style = outlineStyle.copy(fontSize = 18.sp),
                                 textAlign = TextAlign.Center
                             )
@@ -256,7 +262,7 @@ fun GameScreen(
                             Spacer(modifier = Modifier.height(32.dp))
 
                             TriviaButton(
-                                text = "¡SÍ, VER VIDEO!",
+                                text = stringResource(Res.string.btn_watch_video),
                                 onClick = {
                                     viewModel.dismissRewardedPrompt()
                                     getAudioManager().pauseBackgroundMusic() // Pausar para video premiado
@@ -276,7 +282,7 @@ fun GameScreen(
 
                             TextButton(onClick = { viewModel.dismissRewardedPrompt() }) {
                                 Text(
-                                    text = "AHORA NO, GRACIAS",
+                                    text = stringResource(Res.string.btn_not_now),
                                     color = Color.Gray,
                                     fontWeight = FontWeight.Bold
                                 )

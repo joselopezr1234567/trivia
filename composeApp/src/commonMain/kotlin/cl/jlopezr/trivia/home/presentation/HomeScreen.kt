@@ -9,6 +9,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.VolumeMute
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TrendingUp
@@ -27,12 +30,14 @@ import cl.jlopezr.trivia.core.components.TriviaBackgroundContainer
 import cl.jlopezr.trivia.core.components.TriviaButton
 import cl.jlopezr.trivia.shared.core.data.UserSession
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import myapplication.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToRanking: () -> Unit,
-    onNavigateToLogin: () -> Unit, // 🔥 Agregamos esta navegación
+    onNavigateToLogin: () -> Unit,
     onGenerateQuestions: (category: String, difficulty: String) -> Unit,
     viewModel: HomeViewModel
 ) {
@@ -40,7 +45,11 @@ fun HomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    val difficulties = listOf("Básico", "Intermedio", "Difícil")
+    val difficulties = listOf(
+        stringResource(Res.string.difficulty_easy),
+        stringResource(Res.string.difficulty_medium),
+        stringResource(Res.string.difficulty_hard)
+    )
 
     val outlineStyle = TextStyle(
         color = Color.White,
@@ -74,7 +83,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(48.dp))
 
                 Text(
-                    text = " MENÚ TRIV-IA",
+                    text = stringResource(Res.string.menu_title),
                     style = outlineStyle.copy(fontSize = 22.sp, fontWeight = FontWeight.Black),
                     modifier = Modifier.padding(16.dp)
                 )
@@ -83,7 +92,7 @@ fun HomeScreen(
 
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = Color.Yellow) },
-                    label = { Text("Ranking Global", style = outlineStyle.copy(fontSize = 16.sp)) },
+                    label = { Text(stringResource(Res.string.btn_ranking), style = outlineStyle.copy(fontSize = 16.sp)) },
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
@@ -97,8 +106,48 @@ fun HomeScreen(
                 )
 
                 NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.GroupAdd, contentDescription = null, tint = Color.Cyan) },
+                    label = { Text(stringResource(Res.string.btn_invite_friends), style = outlineStyle.copy(fontSize = 16.sp)) },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        viewModel.inviteFriends()
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = Color.Transparent,
+                        selectedContainerColor = Color.White.copy(alpha = 0.1f)
+                    ),
+                    modifier = Modifier.padding(8.dp)
+                )
+
+                NavigationDrawerItem(
+                    icon = { 
+                        Icon(
+                            imageVector = if (state.isMuted) Icons.AutoMirrored.Filled.VolumeMute else Icons.AutoMirrored.Filled.VolumeUp, 
+                            contentDescription = null, 
+                            tint = if (state.isMuted) Color.Gray else Color.Green
+                        ) 
+                    },
+                    label = { 
+                        Text(
+                            text = if (state.isMuted) stringResource(Res.string.sound_on) else stringResource(Res.string.sound_off), 
+                            style = outlineStyle.copy(fontSize = 16.sp)
+                        ) 
+                    },
+                    selected = false,
+                    onClick = {
+                        viewModel.toggleMute()
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = Color.Transparent,
+                        selectedContainerColor = Color.White.copy(alpha = 0.1f)
+                    ),
+                    modifier = Modifier.padding(8.dp)
+                )
+
+                NavigationDrawerItem(
                     icon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = Color.Red) },
-                    label = { Text("Cerrar Sesión", style = outlineStyle.copy(fontSize = 16.sp, color = Color.Red)) },
+                    label = { Text(stringResource(Res.string.btn_logout), style = outlineStyle.copy(fontSize = 16.sp, color = Color.Red)) },
                     selected = false,
                     onClick = {
                         scope.launch {
@@ -176,13 +225,13 @@ fun HomeScreen(
                                     )
                                     Spacer(Modifier.width(4.dp))
                                     Text(
-                                        text = "PROGRESO",
+                                        text = stringResource(Res.string.progress_label),
                                         style = outlineStyle.copy(fontSize = 12.sp, fontWeight = FontWeight.Light)
                                     )
                                 }
                                 Text(
                                     // Agregamos "Nivel" antes del número para que sea más claro
-                                    text = "Nivel ${state.currentLevel}",
+                                    text = stringResource(Res.string.level_format, state.currentLevel),
                                     style = outlineStyle.copy(
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Black,
@@ -198,7 +247,7 @@ fun HomeScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.Star, contentDescription = null, tint = Color.Cyan, modifier = Modifier.size(16.dp))
                                     Spacer(Modifier.width(4.dp))
-                                    Text("PUNTOS", style = outlineStyle.copy(fontSize = 12.sp, fontWeight = FontWeight.Light))
+                                    Text(stringResource(Res.string.points_label), style = outlineStyle.copy(fontSize = 12.sp, fontWeight = FontWeight.Light))
                                 }
                                 Text(
                                     text = "${state.totalScore}",
@@ -219,12 +268,12 @@ fun HomeScreen(
                                     )
                                     Spacer(Modifier.width(4.dp))
                                     Text(
-                                        text = "PREMIO",
+                                        text = stringResource(Res.string.prize_label),
                                         style = outlineStyle.copy(fontSize = 12.sp, fontWeight = FontWeight.Light)
                                     )
                                 }
                                 Text(
-                                    text = "$${((state.totalEarnings * 1000).toInt() / 1000.0)}",
+                                    text = stringResource(Res.string.game_prize_format, ((state.totalEarnings * 1000).toInt() / 1000.0).toString()),
                                     style = outlineStyle.copy(
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Black,
@@ -239,7 +288,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Text(
-                        text = "Elige una categoría para jugar",
+                        text = stringResource(Res.string.choose_category),
                         style = outlineStyle.copy(fontSize = 18.sp),
                         modifier = Modifier.padding(top = 8.dp)
                     )
@@ -264,7 +313,7 @@ fun HomeScreen(
                                 value = state.category,
                                 onValueChange = { viewModel.onCategoryChanged(it) },
                                 placeholder = {
-                                    Text("Ej: Fútbol, Marvel, Historia...", style = placeholderStyle)
+                                    Text(stringResource(Res.string.category_placeholder), style = placeholderStyle)
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 textStyle = outlineStyle.copy(fontSize = 20.sp),
@@ -294,7 +343,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(40.dp))
 
                     Text(
-                        text = "Dificultad sugerida:",
+                        text = stringResource(Res.string.difficulty_label),
                         style = outlineStyle.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -342,7 +391,7 @@ fun HomeScreen(
                         CircularProgressIndicator(color = Color.White)
                     } else {
                         TriviaButton(
-                            text = "GENERAR PREGUNTAS",
+                            text = stringResource(Res.string.btn_play_now),
                             enabled = state.category.isNotBlank() && !state.isLoading,
                             onClick = {
                                 viewModel.generateTrivia { cat: String, diff: String ->

@@ -8,7 +8,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 
 class TriviaRemoteDataSource(private val httpClient: HttpClient) {
-    private val baseUrl = "http://10.0.2.2:8080"
+    private val baseUrl = "http://192.168.1.200:8080"
 
     suspend fun generateTriviaQuestion(category: String, userId: Int): QuestionResponse {
         return httpClient.get("$baseUrl/trivia/generate") {

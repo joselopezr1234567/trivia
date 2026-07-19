@@ -1,0 +1,89 @@
+<resources>
+    <string name="app_name">Trivia IA</string>
+
+    <!-- Login -->
+    <string name="login_title">Iniciar Sesión</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Contraseña</string>
+    <string name="btn_login">ENTRAR</string>
+    <string name="no_account_text">¿No tienes cuenta? </string>
+    <string name="click_here">Haz clic aquí</string>
+    <string name="forgot_password_link">¿Se te olvidó la contraseña?</string>
+
+    <!-- Register -->
+    <string name="register_title">Crea tu Cuenta</string>
+    <string name="full_name_label">Nombre Completo</string>
+    <string name="phone_label">Teléfono</string>
+    <string name="invite_code_label">Código de Invitado (Opcional)</string>
+    <string name="confirm_password_label">Confirmar Contraseña</string>
+    <string name="passwords_dont_match">Las contraseñas no coinciden</string>
+    <string name="btn_register">Registrarme</string>
+    <string name="already_have_account">¿Ya tienes cuenta? Inicia sesión</string>
+
+    <!-- Home -->
+    <string name="progress_label">PROGRESO</string>
+    <string name="level_format">Nivel %d</string>
+    <string name="points_label">PUNTOS</string>
+    <string name="prize_label">PREMIO</string>
+    <string name="choose_category">Elige una categoría para jugar</string>
+    <string name="category_placeholder">Ej: Fútbol, Marvel, Historia...</string>
+    <string name="difficulty_label">Dificultad sugerida:</string>
+    <string name="difficulty_easy">FÁCIL</string>
+    <string name="difficulty_medium">NORMAL</string>
+    <string name="difficulty_hard">DIFÍCIL</string>
+    <string name="btn_play_now">GENERAR PREGUNTAS</string>
+    <string name="btn_ranking">Ranking Global</string>
+    <string name="btn_invite_friends">Enviar Invitación</string>
+    <string name="btn_logout">Cerrar Sesión</string>
+    <string name="menu_title"> MENÚ TRIV-IA</string>
+    <string name="sound_on">Activar Sonido</string>
+    <string name="sound_off">Silenciar</string>
+
+    <!-- Game -->
+    <string name="game_level_format">Nivel: %d</string>
+    <string name="game_prize_format">Premio: $%s</string>
+    <string name="game_points_format">%d Pts</string>
+    <string name="btn_retry">REINTENTAR</string>
+    <string name="feedback_correct">¡CORRECTO!</string>
+    <string name="feedback_correct_msg">¡Vas por buen camino!</string>
+    <string name="feedback_incorrect">¡INCORRECTO!</string>
+    <string name="feedback_incorrect_msg">La respuesta correcta era: %s</string>
+    <string name="feedback_level_up">¡BIEN HECHO!</string>
+    <string name="feedback_level_up_msg">Subiste al Nivel %d</string>
+    <string name="feedback_timeout">¡TIEMPO AGOTADO!</string>
+    <string name="feedback_timeout_msg">¡Inténtalo nuevamente!</string>
+
+    <!-- Rewarded Ad -->
+    <string name="bonus_extra">✨ BONUS EXTRA ✨</string>
+    <string name="rewarded_prompt_msg">¿Quieres ganar 50 PUNTOS EXTRAS viendo un video corto?</string>
+    <string name="btn_watch_video">¡SÍ, VER VIDEO!</string>
+    <string name="btn_not_now">AHORA NO, GRACIAS</string>
+
+    <!-- Forgot Password -->
+    <string name="forgot_password_title">Recuperar Cuenta</string>
+    <string name="back_desc">Volver</string>
+    <string name="forgot_password_instr">Ingresa tu número de teléfono para recibir un código de verificación.</string>
+    <string name="phone_field_label">Número de teléfono</string>
+    <string name="btn_send_code">ENVIAR CÓDIGO</string>
+    <string name="code_sent_success">¡Código enviado con éxito!</string>
+
+    <!-- Reset Password -->
+    <string name="reset_password_title">Nueva Contraseña</string>
+    <string name="reset_password_instr">Ingresa el código que enviamos a tu teléfono y define tu nueva clave.</string>
+    <string name="code_field_label">Código de 6 dígitos</string>
+    <string name="new_password_label">Nueva Contraseña</string>
+    <string name="btn_update_password">ACTUALIZAR CONTRASEÑA</string>
+
+    <!-- Ranking -->
+    <string name="ranking_title">Ranking Global</string>
+    <string name="loading_ranking">Cargando ranking...</string>
+    <string name="no_ranking_data">No hay datos disponibles</string>
+    <!-- OTP -->
+    <string name="verify_phone_title">Verifica tu número</string>
+    <string name="enter_otp_instr">Ingresa el código que enviamos a tu celular</string>
+    <string name="btn_verify">Verificar</string>
+    <string name="share_text">🚀 ¡Únete a TRIV-IA y pon a prueba tus conocimientos! \nDescarga la app en:\nGoogle Play: https://play.google.com/store/apps/details?id=cl.jlopezr.trivia\nApp Store: https://apps.apple.com/app/id-tu-app\n\n🆔 Mi código de invitado es: %s</string>
+    <string name="error_empty_category">Escribe una categoría</string>
+</resources>
+
+

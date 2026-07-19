@@ -20,6 +20,8 @@ import cl.jlopezr.trivia.core.components.TriviaButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Phone
+import org.jetbrains.compose.resources.stringResource
+import myapplication.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +49,7 @@ fun ForgotPasswordScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            "Recuperar Cuenta",
+                            stringResource(Res.string.forgot_password_title),
                             style = outlineStyle.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold)
                         )
                     },
@@ -56,7 +58,7 @@ fun ForgotPasswordScreen(
                             // Usamos la ruta absoluta del icono para evitar errores de compilación en KMP
                             Icon(
                                 imageVector = Icons.Default.ArrowBack, // <--- Simplificado
-                                contentDescription = "Volver",
+                                contentDescription = stringResource(Res.string.back_desc),
                                 tint = Color.White
                             )
                         }
@@ -90,7 +92,7 @@ fun ForgotPasswordScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Ingresa tu número de teléfono para recibir un código de verificación.",
+                            text = stringResource(Res.string.forgot_password_instr),
                             style = outlineStyle.copy(fontSize = 16.sp),
                             modifier = Modifier.padding(bottom = 24.dp)
                         )
@@ -99,7 +101,7 @@ fun ForgotPasswordScreen(
                         TextField(
                             value = state.phoneNumber,
                             onValueChange = onPhoneChange,
-                            label = { Text("Número de teléfono", style = outlineStyle.copy(fontSize = 14.sp)) },
+                            label = { Text(stringResource(Res.string.phone_field_label), style = outlineStyle.copy(fontSize = 14.sp)) },
                             placeholder = { Text("+56 9 XXXX XXXX", color = Color.White.copy(alpha = 0.5f)) },
                             modifier = Modifier.fillMaxWidth(),
                             leadingIcon = {
@@ -138,7 +140,7 @@ fun ForgotPasswordScreen(
 
                         // Tu nuevo botón animado con la imagen btn_entrar
                         TriviaButton(
-                            text = if (state.isLoading) "CARGANDO..." else "ENVIAR CÓDIGO",
+                            text = if (state.isLoading) "..." else stringResource(Res.string.btn_send_code),
                             onClick = onSendCode,
                             enabled = state.phoneNumber.isNotBlank() && !state.isLoading,
                             modifier = Modifier.fillMaxWidth(),
@@ -147,7 +149,7 @@ fun ForgotPasswordScreen(
 
                         if (state.isCodeSent) {
                             Text(
-                                "¡Código enviado con éxito!",
+                                stringResource(Res.string.code_sent_success),
                                 modifier = Modifier.padding(top = 16.dp),
                                 style = outlineStyle.copy(color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
                             )

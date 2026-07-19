@@ -13,6 +13,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import myapplication.composeapp.generated.resources.*
 
 @Composable
 fun OtpVerificationDialog(onDismiss: () -> Unit, onVerify: (String) -> Unit) {
@@ -20,10 +22,10 @@ fun OtpVerificationDialog(onDismiss: () -> Unit, onVerify: (String) -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Verifica tu número") },
+        title = { Text(stringResource(Res.string.verify_phone_title)) },
         text = {
             Column {
-                Text("Ingresa el código que enviamos a tu celular")
+                Text(stringResource(Res.string.enter_otp_instr))
                 OutlinedTextField(
                     value = otpCode,
                     onValueChange = { if (it.length <= 6) otpCode = it },
@@ -33,7 +35,7 @@ fun OtpVerificationDialog(onDismiss: () -> Unit, onVerify: (String) -> Unit) {
             }
         },
         confirmButton = {
-            Button(onClick = { onVerify(otpCode) }) { Text("Verificar") }
+            Button(onClick = { onVerify(otpCode) }) { Text(stringResource(Res.string.btn_verify)) }
         }
     )
 }

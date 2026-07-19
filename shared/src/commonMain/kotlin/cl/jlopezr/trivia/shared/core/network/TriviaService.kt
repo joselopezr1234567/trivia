@@ -26,7 +26,7 @@ class TriviaService {
      */
     suspend fun generateTrivia(request: TriviaRequest): TriviaResponse? {
         return try {
-            val response = client.post("http://10.0.2.2:8080/trivia/generate") {
+            val response = client.post("http://192.168.1.200:8080/trivia/generate") {
                 contentType(ContentType.Application.Json)
 
                 // ✅ CORRECTO: Pasamos el objeto 'request' directamente.

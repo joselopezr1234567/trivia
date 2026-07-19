@@ -14,7 +14,8 @@ data class UserRegisterRequest(
     val username: String,
     val email: String,
     val password: String,
-    val phone: String? = null
+    val phone: String? = null,
+    val inviteCode: String? = null // 🔥 Agregamos el código de invitación
 )
 
 @Serializable

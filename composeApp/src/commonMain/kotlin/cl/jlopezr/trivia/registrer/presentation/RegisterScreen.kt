@@ -32,9 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.jlopezr.trivia.registrer.presentation.RegisterViewModel
 import myapplication.composeapp.generated.resources.Res
-import myapplication.composeapp.generated.resources.btn_entrar
-import myapplication.composeapp.generated.resources.fondo
+import myapplication.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel // ✅ Necesario para Koin
 import kotlin.math.*
 import kotlin.random.Random
@@ -116,6 +116,7 @@ fun RegisterScreen(
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var inviteCode by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
@@ -156,7 +157,7 @@ fun RegisterScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Crea tu Cuenta",
+                text = stringResource(Res.string.register_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White,
                 fontWeight = FontWeight.Bold
@@ -164,15 +165,16 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            CustomRegisterField(value = fullName, onValueChange = { fullName = it }, label = "Nombre Completo")
-            CustomRegisterField(value = phone, onValueChange = { phone = it }, label = "Teléfono", isPhone = true)
-            CustomRegisterField(value = email, onValueChange = { email = it }, label = "Email")
-            CustomRegisterField(value = password, onValueChange = { password = it }, label = "Contraseña", isPassword = true)
-            CustomRegisterField(value = confirmPassword, onValueChange = { confirmPassword = it }, label = "Confirmar Contraseña", isPassword = true)
+            CustomRegisterField(value = fullName, onValueChange = { fullName = it }, label = stringResource(Res.string.full_name_label))
+            CustomRegisterField(value = phone, onValueChange = { phone = it }, label = stringResource(Res.string.phone_label), isPhone = true)
+            CustomRegisterField(value = email, onValueChange = { email = it }, label = stringResource(Res.string.email_label))
+            CustomRegisterField(value = inviteCode, onValueChange = { inviteCode = it }, label = stringResource(Res.string.invite_code_label))
+            CustomRegisterField(value = password, onValueChange = { password = it }, label = stringResource(Res.string.password_label), isPassword = true)
+            CustomRegisterField(value = confirmPassword, onValueChange = { confirmPassword = it }, label = stringResource(Res.string.confirm_password_label), isPassword = true)
 
             // Mensaje de error si las contraseñas no coinciden
             if (confirmPassword.isNotEmpty() && password != confirmPassword) {
-                Text("Las contraseñas no coinciden", color = Color.Yellow, fontSize = 12.sp)
+                Text(stringResource(Res.string.passwords_dont_match), color = Color.Yellow, fontSize = 12.sp)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -196,7 +198,8 @@ fun RegisterScreen(
                                 fullName = fullName,
                                 email = email,
                                 phone = phone,
-                                password = password
+                                password = password,
+                                inviteCode = inviteCode
                             )
                         } else if (email.isEmpty()) {
                             println("⚠️ Error: Email vacío")
@@ -215,7 +218,7 @@ fun RegisterScreen(
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
                     Text(
-                        text = "Registrarme",
+                        text = stringResource(Res.string.btn_register),
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -233,7 +236,7 @@ fun RegisterScreen(
 
             TextButton(onClick = onNavigateToLogin) {
                 Text(
-                    text = "¿Ya tienes cuenta? Inicia sesión",
+                    text = stringResource(Res.string.already_have_account),
                     color = Color.White,
                     fontWeight = FontWeight.Bold
                 )

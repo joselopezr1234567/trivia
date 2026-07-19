@@ -4,6 +4,12 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class LoginServerResponse(
+    val success: Boolean,
+    val message: String
+)
+
+@Serializable
 data class UserLoginRequest(
     @SerialName("email")
     val email: String,
@@ -15,7 +21,15 @@ data class UserRegisterRequest(
     val username: String,
     val email: String,
     val password: String,
-    val phone: String
+    val phone: String,
+    val inviteCode: String? = null // 🔥 Agregado
+)
+
+@Serializable
+data class InviteInfoResponse(
+    val inviteCode: String,
+    val invitesSentThisWeek: Int,
+    val maxInvitesPerWeek: Int = 15
 )
 
 @Serializable
@@ -34,8 +48,9 @@ data class UserProfileResponse(
 @Serializable
 data class TriviaRequest(
     val topic: String,
-    val difficulty: String,      // Debe ser String
-    val history: List<String>?   // Debe ser List<String>
+    val difficulty: String,
+    val history: List<String>?,
+    val language: String = "es" // Nuevo campo para el idioma
 )
 
 @Serializable

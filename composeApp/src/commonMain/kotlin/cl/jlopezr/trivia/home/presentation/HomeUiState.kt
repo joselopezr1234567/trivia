@@ -7,5 +7,6 @@ data class HomeUiState(
     val errorMessage: String? = null,
     val totalScore: Int = 0,
     val currentLevel: Int = 1,
-    val totalEarnings: Double = 0.0
+    val totalEarnings: Double = 0.0,
+    val isMuted: Boolean = false // 🔥 Agregado
 )

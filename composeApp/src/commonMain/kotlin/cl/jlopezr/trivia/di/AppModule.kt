@@ -1,10 +1,16 @@
 package cl.jlopezr.trivia.di
 
 import cl.jlopezr.trivia.login.presentation.LoginViewModel
-// ✅ Importamos el RegisterViewModel (Asegúrate de que la ruta sea correcta)
 import cl.jlopezr.trivia.registrer.presentation.RegisterViewModel
+import cl.jlopezr.trivia.home.presentation.HomeViewModel
+import cl.jlopezr.trivia.home.domain.usecase.GetQuestionsUseCase
+import cl.jlopezr.trivia.home.data.repository.TriviaRepositoryImpl
 import cl.jlopezr.trivia.shared.features.login.data.repository.AuthRepositoryImpl
 import cl.jlopezr.trivia.shared.features.login.domain.AuthRepository
+import cl.jlopezr.trivia.shared.features.user.data.UserRepository
+import cl.jlopezr.trivia.shared.features.game.domain.repository.TriviaRepository
+import cl.jlopezr.trivia.game.presentation.TriviaViewModel
+import cl.jlopezr.trivia.ranking.presentation.RankingViewModel
 
 // Koin
 import org.koin.dsl.module
@@ -15,17 +21,15 @@ import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
-import org.koin.core.module.dsl.viewModel
-import org.koin.dsl.module
 
 // Importamos el platformModule que es diferente para cada plataforma
 expect val platformModule: org.koin.core.module.Module
 
 val appModule = module {
-    // Incluir el módulo de plataforma (donde está AdsManager)
+    // Incluir el módulo de plataforma
     includes(platformModule)
 
-    // 1. Cliente HTTP (Configurado para ignorar claves desconocidas del JSON)
+    // 1. Cliente HTTP
     single {
         HttpClient {
             install(ContentNegotiation) {
@@ -37,14 +41,19 @@ val appModule = module {
         }
     }
 
-    // 2. Repositorio
-    // 'get()' inyectará automáticamente el HttpClient de arriba
+    // 2. Repositorios
     single<AuthRepository> { AuthRepositoryImpl(get()) }
+    single { UserRepository() }
+    single { TriviaRepository() }
+    single { TriviaRepositoryImpl() }
 
-    // 3. ViewModels
-    // 'get()' inyectará automáticamente el AuthRepository en ambos ViewModels
+    // 3. Use Cases
+    single { GetQuestionsUseCase(get<TriviaRepositoryImpl>()) }
+
+    // 4. ViewModels
     viewModel { LoginViewModel(get()) }
-
-    // ✅ REGISTRAMOS EL VIEWMODEL DE REGISTRO
     viewModel { RegisterViewModel(get()) }
+    viewModel { HomeViewModel(get(), get()) }
+    viewModel { TriviaViewModel(get(), get()) }
+    viewModel { RankingViewModel() }
 }

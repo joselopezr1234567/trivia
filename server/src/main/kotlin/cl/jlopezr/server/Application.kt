@@ -31,6 +31,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
@@ -40,6 +42,7 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 // 1. Mapeo de Tablas
 object UsersTable : Table("users") {
@@ -49,7 +52,10 @@ object UsersTable : Table("users") {
     val password = varchar("password", 100)
     val phone = varchar("phone", 20)
     val createdAt = timestamp("created_at")
-    val verificationCode = varchar("verification_code", 10).nullable() // 🔥 Agregado
+    val verificationCode = varchar("verification_code", 10).nullable()
+    val inviteCode = varchar("invite_code", 20).uniqueIndex().nullable() // 🔥 Agregado
+    val invitesSentThisWeek = integer("invites_sent_this_week").default(0) // 🔥 Agregado
+    val lastInviteReset = timestamp("last_invite_reset").default(Instant.now()) // 🔥 Agregado
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -93,6 +99,13 @@ data class UserProgressRequest(
     val level: Int
 )
 
+@Serializable
+data class InviteInfoResponse(
+    val inviteCode: String,
+    val invitesSentThisWeek: Int,
+    val maxInvitesPerWeek: Int = 15
+)
+
 fun main() {
     val apiKey = System.getenv("OPENAI_API_KEY")
         ?: throw Exception("ERROR: No se encontró la variable de entorno OPENAI_API_KEY")
@@ -106,7 +119,7 @@ fun main() {
         password = ""
     )
 
-    embeddedServer(Netty, port = 8080) {
+    embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
@@ -208,20 +221,23 @@ fun main() {
                 post("/register") {
                     try {
                         val user = call.receive<UserRegisterRequest>()
-                        println("LOG [REGISTER]: Registrando a ${user.email}")
+                        val inviteCode = user.inviteCode // 🔥 Cambiado: ahora viene del body JSON
+                        println("LOG [REGISTER]: Registrando a ${user.email} con inviteCode: $inviteCode")
 
                         val result = transaction {
                             // 1. Verificar si ya existe el email
                             val exists = UsersTable.selectAll().where { UsersTable.email eq user.email }.count() > 0
                             if (exists) return@transaction "Email ya registrado"
 
-                            // 2. Insertar usuario
+                            // 2. Insertar usuario y generar su propio código de invitación
+                            val newInviteCode = (user.username.take(3).uppercase() + (1000..9999).random().toString())
                             UsersTable.insert {
                                 it[username] = user.username
                                 it[email] = user.email
                                 it[password] = user.password
                                 it[phone] = user.phone ?: ""
                                 it[createdAt] = Instant.now()
+                                it[UsersTable.inviteCode] = newInviteCode
                             }
 
                             // 3. Inicializar puntos y nivel
@@ -234,6 +250,19 @@ fun main() {
                                 it[userEmail] = user.email
                                 it[currentLevel] = 1
                                 it[updatedAt] = Instant.now()
+                            }
+
+                            // 4. Procesar Código de Invitado (200 puntos para el invitador)
+                            if (!inviteCode.isNullOrBlank()) {
+                                val inviter = UsersTable.selectAll().where { UsersTable.inviteCode eq inviteCode }.singleOrNull()
+                                if (inviter != null) {
+                                    val inviterEmail = inviter[UsersTable.email]
+                                    UserPointsTable.update({ UserPointsTable.userEmail eq inviterEmail }) {
+                                        it.update(UserPointsTable.totalPoints, UserPointsTable.totalPoints.plus(200))
+                                        it[updatedAt] = Instant.now()
+                                    }
+                                    println("LOG [REGISTER]: Recompensa de 200 pts enviada a $inviterEmail")
+                                }
                             }
 
                             null // Éxito
@@ -251,8 +280,64 @@ fun main() {
                 }
             }
 
-            // --- RUTAS DE PROGRESO ---
+            // --- RUTAS DE PROGRESO Y USUARIO ---
             route("/user") {
+                get("/invite-info/{email}") {
+                    val email = call.parameters["email"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    try {
+                        val info = transaction {
+                            val user = UsersTable.selectAll().where { UsersTable.email eq email }.single()
+                            
+                            // Resetear contador semanal si ha pasado una semana
+                            val lastReset = user[UsersTable.lastInviteReset]
+                            if (lastReset.plus(7, ChronoUnit.DAYS).isBefore(Instant.now())) {
+                                UsersTable.update({ UsersTable.email eq email }) {
+                                    it[invitesSentThisWeek] = 0
+                                    it[lastInviteReset] = Instant.now()
+                                }
+                            }
+
+                            InviteInfoResponse(
+                                inviteCode = user[UsersTable.inviteCode] ?: "",
+                                invitesSentThisWeek = user[UsersTable.invitesSentThisWeek]
+                            )
+                        }
+                        call.respond(HttpStatusCode.OK, info)
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
+                    }
+                }
+
+                post("/claim-invite-reward/{email}") {
+                    val email = call.parameters["email"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    try {
+                        val result = transaction {
+                            val user = UsersTable.selectAll().where { UsersTable.email eq email }.single()
+                            val sent = user[UsersTable.invitesSentThisWeek]
+
+                            if (sent < 15) {
+                                // Sumar 100 puntos
+                                UserPointsTable.update({ UserPointsTable.userEmail eq email }) {
+                                    it.update(UserPointsTable.totalPoints, UserPointsTable.totalPoints.plus(100))
+                                    it[updatedAt] = Instant.now()
+                                }
+                                // Aumentar contador
+                                UsersTable.update({ UsersTable.email eq email }) {
+                                    it[invitesSentThisWeek] = sent + 1
+                                }
+                                true
+                            } else false
+                        }
+
+                        if (result) {
+                            call.respond(HttpStatusCode.OK, LoginResponse(true, "¡100 puntos sumados por invitar!"))
+                        } else {
+                            call.respond(HttpStatusCode.Forbidden, LoginResponse(false, "Límite semanal de 15 invitaciones alcanzado"))
+                        }
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
+                    }
+                }
                 get("/progress/{email}") {
                     val email = call.parameters["email"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                     println("LOG [GET PROGRESS]: Consultando puntos para -> $email")
@@ -340,10 +425,14 @@ fun main() {
                                     ChatMessage(
                                         role = ChatRole.System,
                                         content = """
-                                            Eres un generador de trivias experto. Responde UNICAMENTE con JSON.
+                                            IDIOMA CRITICO: Responde EXCLUSIVAMENTE en el idioma: ${request.language.uppercase()}.
+                                            Eres un generador de trivias experto. Responde UNICAMENTE con JSON puro.
                                             FORMATO: {"question": "...", "options": ["...", "...", "...", "..."], "correctIndex": 0, "explanation": "..."}
-                                            CRITICO: El campo "correctIndex" DEBE ser aleatorio entre 0 y 3. No pongas siempre la respuesta correcta en la misma posicion.
-                                            CRITICO: El campo "explanation" debe ser una breve explicacion de por qué esa es la respuesta correcta.
+                                            REGLAS:
+                                            1. El campo "question" DEBE estar en ${request.language}.
+                                            2. TODOS los elementos de "options" DEBEN estar en ${request.language}.
+                                            3. El campo "explanation" DEBE ser una breve explicación en ${request.language}.
+                                            4. El campo "correctIndex" DEBE ser aleatorio entre 0 y 3.
                                             $historyBlock
                                         """.trimIndent()
                                     ),

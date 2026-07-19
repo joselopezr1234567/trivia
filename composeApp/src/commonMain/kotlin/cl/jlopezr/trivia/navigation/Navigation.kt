@@ -2,7 +2,6 @@ package cl.jlopezr.trivia.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -14,8 +13,6 @@ import cl.jlopezr.trivia.forgotpassword.domain.usecase.ValidatePhoneUseCase
 import cl.jlopezr.trivia.forgotpassword.presentation.ForgotPasswordScreen
 import cl.jlopezr.trivia.forgotpassword.presentation.ForgotPasswordViewModel
 import cl.jlopezr.trivia.forgotpassword.presentation.ResetPasswordScreen
-import cl.jlopezr.trivia.home.data.repository.TriviaRepositoryImpl
-import cl.jlopezr.trivia.home.domain.usecase.GetQuestionsUseCase
 import cl.jlopezr.trivia.home.presentation.HomeScreen
 import cl.jlopezr.trivia.home.presentation.HomeViewModel
 import cl.jlopezr.trivia.login.presentation.LoginScreen
@@ -24,7 +21,11 @@ import cl.jlopezr.trivia.game.presentation.GameScreen
 import cl.jlopezr.trivia.game.presentation.TriviaViewModel
 import cl.jlopezr.trivia.ranking.presentation.RankingScreen
 import cl.jlopezr.trivia.ranking.presentation.RankingViewModel
-import cl.jlopezr.trivia.shared.features.user.data.UserRepository
+import cl.jlopezr.trivia.login.presentation.LoginViewModel
+import cl.jlopezr.trivia.registrer.presentation.RegisterViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AppNavigation() {
@@ -36,7 +37,9 @@ fun AppNavigation() {
     ) {
         // 1. Pantalla de Login
         composable("login") {
+            val loginViewModel: LoginViewModel = koinViewModel()
             LoginScreen(
+                viewModel = loginViewModel,
                 onNavigateToHome = {
                     navController.navigate("home") {
                         popUpTo("login") { inclusive = true }
@@ -106,18 +109,16 @@ fun AppNavigation() {
 
         // 4. Registro
         composable("register") {
-            RegisterScreen(onNavigateToLogin = { navController.popBackStack() })
+            val registerViewModel: RegisterViewModel = koinViewModel()
+            RegisterScreen(
+                viewModel = registerViewModel,
+                onNavigateToLogin = { navController.popBackStack() }
+            )
         }
 
         // 5. Home
         composable("home") {
-            val repository = TriviaRepositoryImpl()
-            val getQuestionsUseCase = GetQuestionsUseCase(repository)
-            val userRepository = UserRepository()
-
-            val homeViewModel = viewModel<HomeViewModel> {
-                HomeViewModel(getQuestionsUseCase, userRepository)
-            }
+            val homeViewModel: HomeViewModel = koinViewModel()
 
             LaunchedEffect(Unit) {
                 homeViewModel.loadUserProgress()
@@ -147,16 +148,7 @@ fun AppNavigation() {
             )
         ) { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "General"
-            val triviaRepository = cl.jlopezr.trivia.shared.features.game.domain.repository.TriviaRepository()
-            val userRepository = UserRepository()
-
-            val gameViewModel = viewModel<TriviaViewModel> {
-                TriviaViewModel(triviaRepository, userRepository)
-            }
-
-            LaunchedEffect(category) {
-                // Ya no cargamos aquí, lo hace el GameScreen pasando el callback
-            }
+            val gameViewModel: TriviaViewModel = koinViewModel()
 
             GameScreen(
                 category = category,
@@ -167,7 +159,7 @@ fun AppNavigation() {
 
         // 7. Ranking
         composable("ranking") {
-            val rankingViewModel = viewModel<RankingViewModel>()
+            val rankingViewModel: RankingViewModel = koinViewModel()
             RankingScreen(
                 viewModel = rankingViewModel,
                 onBack = { navController.popBackStack() }

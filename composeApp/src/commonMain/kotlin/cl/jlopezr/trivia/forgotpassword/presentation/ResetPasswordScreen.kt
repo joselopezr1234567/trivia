@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.jlopezr.trivia.core.components.TriviaBackgroundContainer
 import cl.jlopezr.trivia.core.components.TriviaButton
+import org.jetbrains.compose.resources.stringResource
+import myapplication.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,13 +54,13 @@ fun ResetPasswordScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            "Nueva Contraseña",
+                            stringResource(Res.string.reset_password_title),
                             style = outlineStyle.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold)
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.White)
+                            Icon(Icons.Default.ArrowBack, contentDescription = stringResource(Res.string.back_desc), tint = Color.White)
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -87,7 +89,7 @@ fun ResetPasswordScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Ingresa el código que enviamos a tu teléfono y define tu nueva clave.",
+                            text = stringResource(Res.string.reset_password_instr),
                             style = outlineStyle.copy(fontSize = 15.sp),
                             modifier = Modifier.padding(bottom = 24.dp)
                         )
@@ -96,7 +98,7 @@ fun ResetPasswordScreen(
                         CustomResetField(
                             value = state.code,
                             onValueChange = { if (it.length <= 6) onCodeChange(it) },
-                            label = "Código de 6 dígitos",
+                            label = stringResource(Res.string.code_field_label),
                             icon = Icons.Default.Lock,
                             keyboardType = KeyboardType.Number,
                             outlineStyle = outlineStyle
@@ -108,7 +110,7 @@ fun ResetPasswordScreen(
                         CustomResetField(
                             value = state.newPassword,
                             onValueChange = onPasswordChange,
-                            label = "Nueva Contraseña",
+                            label = stringResource(Res.string.new_password_label),
                             icon = Icons.Default.VpnKey,
                             keyboardType = KeyboardType.Password,
                             outlineStyle = outlineStyle,
@@ -127,7 +129,7 @@ fun ResetPasswordScreen(
                         CustomResetField(
                             value = state.confirmPassword,
                             onValueChange = onConfirmPasswordChange,
-                            label = "Confirmar Contraseña",
+                            label = stringResource(Res.string.confirm_password_label),
                             icon = Icons.Default.CheckCircle,
                             keyboardType = KeyboardType.Password,
                             outlineStyle = outlineStyle,
@@ -137,7 +139,7 @@ fun ResetPasswordScreen(
 
                         if (state.newPassword != state.confirmPassword && state.confirmPassword.isNotEmpty()) {
                             Text(
-                                "Las contraseñas no coinciden",
+                                stringResource(Res.string.passwords_dont_match),
                                 color = Color.Red,
                                 style = outlineStyle.copy(fontSize = 12.sp),
                                 modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
@@ -157,7 +159,7 @@ fun ResetPasswordScreen(
 
                         // Botón con imagen btn_entrar
                         TriviaButton(
-                            text = if (state.isLoading) "ACTUALIZANDO..." else "ACTUALIZAR CONTRASEÑA",
+                            text = if (state.isLoading) "..." else stringResource(Res.string.btn_update_password),
                             onClick = onResetPassword,
                             enabled = state.code.length == 6 &&
                                     state.newPassword.isNotEmpty() &&

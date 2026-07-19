@@ -21,7 +21,7 @@ class RegisterViewModel(
     val uiState = _uiState.asStateFlow()
 
     // ✅ Cambiamos el nombre a 'register' y agregamos los campos faltantes
-    fun register(fullName: String, email: String, phone: String, password: String) {
+    fun register(fullName: String, email: String, phone: String, password: String, inviteCode: String? = null) {
 
         viewModelScope.launch {
             // 1. Mostrar estado de carga
@@ -35,7 +35,8 @@ class RegisterViewModel(
                 username = fullName.trim(),
                 email = cleanEmail,
                 password = cleanPass,
-                phone = phone.trim()
+                phone = phone.trim(),
+                inviteCode = if (inviteCode.isNullOrBlank()) null else inviteCode.trim()
             )
 
             // 3. Llamada real al repositorio (conecta con Ktor)

@@ -8,4 +8,5 @@ object ProgressStorage {
     var totalScore: Int = 0
     var currentLevel: Int = 1
     var totalEarnings: Double = 0.0
+    var isMuted: Boolean = false // 🔥 Agregado
 }

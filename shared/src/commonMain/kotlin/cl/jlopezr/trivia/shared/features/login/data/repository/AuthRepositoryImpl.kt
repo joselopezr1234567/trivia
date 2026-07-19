@@ -13,16 +13,11 @@ import io.ktor.http.*
 import io.ktor.client.HttpClient
 import kotlinx.serialization.Serializable
 import cl.jlopezr.trivia.shared.registrer.domain.model.RegisterUser
-
-@Serializable
-data class LoginServerResponse(
-    val success: Boolean,
-    val message: String
-)
+import cl.jlopezr.trivia.shared.core.network.model.LoginServerResponse
 
 class AuthRepositoryImpl(private val httpClient: HttpClient) : AuthRepository {
 
-    private val baseUrl = "http://10.0.2.2:8080"
+    private val baseUrl = "http://192.168.1.200:8080"
 
     override suspend fun login(email: String, password: String): Result<UserProfileResponse> {
         return try {

@@ -6,13 +6,15 @@ import cl.jlopezr.trivia.home.domain.usecase.GetQuestionsUseCase
 import cl.jlopezr.trivia.shared.core.data.ProgressStorage
 import cl.jlopezr.trivia.shared.core.data.UserSession
 import cl.jlopezr.trivia.shared.features.user.data.UserRepository // Importación necesaria
+import cl.jlopezr.trivia.core.util.getShareManager
+import cl.jlopezr.trivia.core.audio.getAudioManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-
+import org.jetbrains.compose.resources.getString
+import myapplication.composeapp.generated.resources.*
 
 class HomeViewModel(
     private val getQuestionsUseCase: GetQuestionsUseCase,
@@ -39,10 +41,17 @@ class HomeViewModel(
                 it.copy(
                     totalScore = ProgressStorage.totalScore,
                     currentLevel = ProgressStorage.currentLevel,
-                    totalEarnings = ProgressStorage.totalEarnings
+                    totalEarnings = ProgressStorage.totalEarnings,
+                    isMuted = ProgressStorage.isMuted
                 )
             }
         }
+    }
+
+    fun toggleMute() {
+        ProgressStorage.isMuted = !ProgressStorage.isMuted
+        getAudioManager().setMuted(ProgressStorage.isMuted)
+        loadUserProgress() // Refrescar UI
     }
 
     /**
@@ -63,6 +72,29 @@ class HomeViewModel(
                 loadUserProgress()
             }.onFailure { error ->
                 println("Error al sincronizar con SQL: ${error.message}")
+            }
+        }
+    }
+
+    fun inviteFriends() {
+        val userEmail = UserSession.email
+        if (userEmail.isBlank()) return
+
+        viewModelScope.launch {
+            userRepository.getInviteInfo(userEmail).onSuccess { info ->
+                val localizedText = getString(Res.string.share_text, info.inviteCode)
+                getShareManager().shareText(localizedText)
+                
+                // Reclamar recompensa de 100 puntos (el servidor valida el límite de 15/semana)
+                userRepository.claimInviteReward(userEmail).onSuccess { message ->
+                    println("LOG [INVITE]: $message")
+                    // Refrescar progreso para ver los puntos nuevos
+                    syncFromCloud()
+                }.onFailure { e ->
+                    println("ERROR [INVITE REWARD]: ${e.message}")
+                }
+            }.onFailure { e ->
+                println("ERROR [INVITE INFO]: ${e.message}")
             }
         }
     }
@@ -105,7 +137,10 @@ class HomeViewModel(
         val difficulty = _uiState.value.difficulty
 
         if (category.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Escribe una categoría") }
+            viewModelScope.launch {
+                val errorMsg = getString(Res.string.error_empty_category)
+                _uiState.update { it.copy(errorMessage = errorMsg) }
+            }
             return
         }
 

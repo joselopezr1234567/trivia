@@ -39,7 +39,7 @@ val client = HttpClient {
 
 suspend fun login(user: String, pass: String): Boolean {
     return try {
-        val response = client.post("http://10.0.2.2:8080/auth/login") {
+        val response = client.post("http://192.168.1.200:8080/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(LoginRequest(user, pass))
         }
@@ -67,7 +67,7 @@ suspend fun login(user: String, pass: String): Boolean {
 // Agrega esto a tu archivo de red
 suspend fun fetchRanking(): List<RankingItem> {
     return try {
-        val response = client.get("http://10.0.2.2:8080/ranking") {
+        val response = client.get("http://192.168.1.200:8080/ranking") {
             contentType(ContentType.Application.Json)
         }
 

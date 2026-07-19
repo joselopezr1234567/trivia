@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cl.jlopezr.trivia.core.ads.getAdsManager
 import cl.jlopezr.trivia.core.audio.getAudioManager
+import cl.jlopezr.trivia.shared.core.data.ProgressStorage
 import cl.jlopezr.trivia.navigation.AppNavigation
 
 // Eliminamos @Preview y su import para limpiar el archivo
@@ -20,6 +21,7 @@ import cl.jlopezr.trivia.navigation.AppNavigation
 fun App() {
     // --- MÚSICA DE FONDO GLOBAL ---
     LaunchedEffect(Unit) {
+        getAudioManager().setMuted(ProgressStorage.isMuted) // 🔥 Inicializar estado de mute
         getAudioManager().playBackgroundMusic()
     }
 

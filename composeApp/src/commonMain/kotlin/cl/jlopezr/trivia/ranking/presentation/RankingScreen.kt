@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.jlopezr.trivia.core.components.TriviaBackgroundContainer
 import cl.jlopezr.trivia.shared.core.data.UserSession
+import org.jetbrains.compose.resources.stringResource
+import myapplication.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +48,7 @@ fun RankingScreen(viewModel: RankingViewModel, onBack: () -> Unit) {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            "RANKING GLOBAL",
+                            stringResource(Res.string.ranking_title),
                             style = outlineStyle.copy(fontSize = 24.sp, fontWeight = FontWeight.Black)
                         )
                     },
@@ -54,7 +56,7 @@ fun RankingScreen(viewModel: RankingViewModel, onBack: () -> Unit) {
                         IconButton(onClick = onBack) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Volver",
+                                contentDescription = stringResource(Res.string.back_desc),
                                 tint = Color.White
                             )
                         }
@@ -73,7 +75,7 @@ fun RankingScreen(viewModel: RankingViewModel, onBack: () -> Unit) {
                     )
                 } else if (state.rankingList.isEmpty()) {
                     Text(
-                        text = "No hay datos en el ranking todavía",
+                        text = stringResource(Res.string.no_ranking_data),
                         modifier = Modifier.align(Alignment.Center),
                         style = outlineStyle.copy(color = Color.Gray)
                     )
@@ -144,7 +146,7 @@ fun RankingRow(position: Int, item: RankingItem, outlineStyle: TextStyle) {
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "${item.score} pts",
+                    text = stringResource(Res.string.game_points_format, item.score),
                     style = outlineStyle.copy(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
@@ -152,7 +154,7 @@ fun RankingRow(position: Int, item: RankingItem, outlineStyle: TextStyle) {
                     )
                 )
                 Text(
-                    text = "Nivel ${item.level}",
+                    text = stringResource(Res.string.level_format, item.level),
                     style = outlineStyle.copy(
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Light,
