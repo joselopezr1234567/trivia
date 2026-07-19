@@ -16,7 +16,7 @@
     <string name="btn_register">Registrar-me</string>
     <string name="already_have_account">Já tem uma conta? Entre aqui</string>
     <string name="progress_label">PROGRESSO</string>
-    <string name="level_format">Nível %d</string>
+    <string name="level_format">Nível %1$d</string>
     <string name="points_label">PONTOS</string>
     <string name="prize_label">PRÊMIO</string>
     <string name="choose_category">Escolha uma categoria para jogar</string>
@@ -26,16 +26,16 @@
     <string name="difficulty_medium">NORMAL</string>
     <string name="difficulty_hard">DIFÍCIL</string>
     <string name="btn_play_now">GERAR PERGUNTAS</string>
-    <string name="game_level_format">Nível: %d</string>
-    <string name="game_prize_format">Prêmio: $%s</string>
-    <string name="game_points_format">%d Pts</string>
+    <string name="game_level_format">Nível: %1$d</string>
+    <string name="game_prize_format">Prêmio: $%1$s</string>
+    <string name="game_points_format">%1$d Pts</string>
     <string name="btn_retry">TENTAR NOVAMENTE</string>
     <string name="feedback_correct">CORRETO!</string>
     <string name="feedback_correct_msg">Você está no caminho certo!</string>
     <string name="feedback_incorrect">INCORRETO!</string>
-    <string name="feedback_incorrect_msg">A resposta correta era: %s</string>
+    <string name="feedback_incorrect_msg">A resposta correta era: %1$s</string>
     <string name="feedback_level_up">BEM FEITO!</string>
-    <string name="feedback_level_up_msg">Você subiu para o Nível %d</string>
+    <string name="feedback_level_up_msg">Você subiu para o Nível %1$d</string>
     <string name="feedback_timeout">TEMPO ESGOTADO!</string>
     <string name="feedback_timeout_msg">Tente novamente!</string>
     <string name="bonus_extra">✨ BÔNUS EXTRA ✨</string>
@@ -48,6 +48,7 @@
     <string name="btn_ranking">Ranking Global</string>
     <string name="btn_invite_friends">Enviar Convite</string>
     <string name="btn_logout">Sair</string>
-    <string name="share_text">🚀 Junte-se ao TRIV-IA e teste seus conhecimentos! \nBaixe o app em:\nGoogle Play: https://play.google.com/store/apps/details?id=cl.jlopezr.trivia\n\n🆔 Meu código de convite é: %s</string>
+    <string name="share_text">🚀 Junte-se ao TRIV-IA e teste seus conhecimentos! \nBaixe o app em:\nGoogle Play: https://play.google.com/store/apps/details?id=cl.jlopezr.trivia\n\n🆔 Meu código de convite é: %1$s</string>
     <string name="error_empty_category">Digite uma categoria</string>
+    <string name="splash_text">Você acha que pode vencer Einstein?</string>
 </resources>

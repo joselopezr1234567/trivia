@@ -58,6 +58,9 @@ kotlin {
             
             // Google AdMob SDK
             implementation("com.google.android.gms:play-services-ads:23.6.0")
+
+            // Splash Screen API
+            implementation("androidx.core:core-splashscreen:1.0.1")
         }
     }
 }

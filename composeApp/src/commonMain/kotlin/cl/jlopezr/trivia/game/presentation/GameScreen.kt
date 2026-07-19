@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeMute
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -61,6 +63,7 @@ fun GameScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val feedback = viewModel.showFeedback // Observamos el estado de animación
+    val scrollState = rememberScrollState()
 
     LaunchedEffect(category) {
         viewModel.loadQuestion(category, onGameOver = onBack)
@@ -70,8 +73,7 @@ fun GameScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             // --- CAPA 1: EL JUEGO ---
             Column(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.fillMaxSize().padding(24.dp)
             ) {
                 // HUD: Puntos y Nivel
                 Row(
@@ -121,44 +123,50 @@ fun GameScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                when (val uiState = state) {
-                    is TriviaUiState.Loading -> {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.align(Alignment.CenterHorizontally))
-                    }
-                    is TriviaUiState.Success -> {
-                        val trivia = uiState.question
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = trivia.question,
-                                color = Color.White,
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(bottom = 32.dp)
-                            )
-
-                            trivia.options.forEachIndexed { index, option ->
-                                TriviaButton(
-                                    text = option,
-                                    enabled = !viewModel.isAnswerSelected, // DESHABILITAR SI YA ELIGIÓ
-                                    onClick = {
-                                        viewModel.processAnswer(
-                                            isCorrect = index == trivia.correctIndex,
-                                            category = category,
-                                            onGameOver = onBack
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                Column(
+                    modifier = Modifier.fillMaxSize().verticalScroll(scrollState),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    when (val uiState = state) {
+                        is TriviaUiState.Loading -> {
+                            CircularProgressIndicator(color = Color.White)
+                        }
+                        is TriviaUiState.Success -> {
+                            val trivia = uiState.question
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = trivia.question,
+                                    color = Color.White,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(bottom = 32.dp)
                                 )
+
+                                trivia.options.forEachIndexed { index, option ->
+                                    TriviaButton(
+                                        text = option,
+                                        enabled = !viewModel.isAnswerSelected, // DESHABILITAR SI YA ELIGIÓ
+                                        onClick = {
+                                            viewModel.processAnswer(
+                                                isCorrect = index == trivia.correctIndex,
+                                                category = category,
+                                                onGameOver = onBack
+                                            )
+                                        },
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                                    )
+                                }
                             }
                         }
-                    }
-                    is TriviaUiState.Error -> {
-                        Text("${stringResource(Res.string.feedback_incorrect)}: ${uiState.message}", color = Color.Red)
-                        TriviaButton(
-                            text = stringResource(Res.string.btn_retry),
-                            onClick = { viewModel.loadQuestion(category, onGameOver = onBack) }
-                        )
+                        is TriviaUiState.Error -> {
+                            Text("${stringResource(Res.string.feedback_incorrect)}: ${uiState.message}", color = Color.Red)
+                            TriviaButton(
+                                text = stringResource(Res.string.btn_retry),
+                                onClick = { viewModel.loadQuestion(category, onGameOver = onBack) }
+                            )
+                        }
                     }
                 }
             }

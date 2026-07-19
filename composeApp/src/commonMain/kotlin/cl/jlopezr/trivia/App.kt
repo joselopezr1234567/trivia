@@ -15,10 +15,37 @@ import cl.jlopezr.trivia.core.ads.getAdsManager
 import cl.jlopezr.trivia.core.audio.getAudioManager
 import cl.jlopezr.trivia.shared.core.data.ProgressStorage
 import cl.jlopezr.trivia.navigation.AppNavigation
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.runtime.DisposableEffect
 
 // Eliminamos @Preview y su import para limpiar el archivo
 @Composable
 fun App() {
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // --- MANEJO DE CICLO DE VIDA PARA MÚSICA ---
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    getAudioManager().pauseBackgroundMusic()
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    if (!ProgressStorage.isMuted) {
+                        getAudioManager().resumeBackgroundMusic()
+                    }
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     // --- MÚSICA DE FONDO GLOBAL ---
     LaunchedEffect(Unit) {
         getAudioManager().setMuted(ProgressStorage.isMuted) // 🔥 Inicializar estado de mute

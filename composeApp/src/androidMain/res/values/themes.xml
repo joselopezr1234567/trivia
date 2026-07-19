@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema para la Splash Screen del Sistema -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Fondo negro para que no se note el cambio al Splash de Compose -->
+        <item name="windowSplashScreenBackground">#000000</item>
+        <!-- Quitamos el icono del sistema (lo hacemos transparente) -->
+        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+        <!-- Tema al que cambiará después de cargar -->
+        <item name="postSplashScreenTheme">@android:style/Theme.Material.Light.NoActionBar</item>
+    </style>
+</resources>

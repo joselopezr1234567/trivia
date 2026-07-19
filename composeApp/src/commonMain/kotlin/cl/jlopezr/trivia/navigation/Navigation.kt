@@ -23,6 +23,7 @@ import cl.jlopezr.trivia.ranking.presentation.RankingScreen
 import cl.jlopezr.trivia.ranking.presentation.RankingViewModel
 import cl.jlopezr.trivia.login.presentation.LoginViewModel
 import cl.jlopezr.trivia.registrer.presentation.RegisterViewModel
+import cl.jlopezr.trivia.splash.presentation.SplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import org.koin.compose.viewmodel.koinViewModel
@@ -33,8 +34,17 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = "login"
+        startDestination = "splash"
     ) {
+        // 0. Splash Screen
+        composable("splash") {
+            SplashScreen(onNavigateToNext = {
+                navController.navigate("login") {
+                    popUpTo("splash") { inclusive = true }
+                }
+            })
+        }
+
         // 1. Pantalla de Login
         composable("login") {
             val loginViewModel: LoginViewModel = koinViewModel()

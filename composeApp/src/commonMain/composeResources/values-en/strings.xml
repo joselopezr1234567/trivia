@@ -22,7 +22,7 @@
 
     <!-- Home -->
     <string name="progress_label">PROGRESS</string>
-    <string name="level_format">Level %d</string>
+    <string name="level_format">Level %1$d</string>
     <string name="points_label">POINTS</string>
     <string name="prize_label">PRIZE</string>
     <string name="choose_category">Choose a category to play</string>
@@ -40,16 +40,16 @@
     <string name="sound_off">Mute</string>
 
     <!-- Game -->
-    <string name="game_level_format">Level: %d</string>
-    <string name="game_prize_format">Prize: $%s</string>
-    <string name="game_points_format">%d Pts</string>
+    <string name="game_level_format">Level: %1$d</string>
+    <string name="game_prize_format">Prize: $%1$s</string>
+    <string name="game_points_format">%1$d Pts</string>
     <string name="btn_retry">RETRY</string>
     <string name="feedback_correct">CORRECT!</string>
     <string name="feedback_correct_msg">You\'re on the right track!</string>
     <string name="feedback_incorrect">INCORRECT!</string>
-    <string name="feedback_incorrect_msg">The correct answer was: %s</string>
+    <string name="feedback_incorrect_msg">The correct answer was: %1$s</string>
     <string name="feedback_level_up">WELL DONE!</string>
-    <string name="feedback_level_up_msg">You leveled up to Level %d</string>
+    <string name="feedback_level_up_msg">You leveled up to Level %1$d</string>
     <string name="feedback_timeout">TIME\'S UP!</string>
     <string name="feedback_timeout_msg">Try again!</string>
 
@@ -82,8 +82,9 @@
     <string name="verify_phone_title">Verify your number</string>
     <string name="enter_otp_instr">Enter the code we sent to your phone</string>
     <string name="btn_verify">Verify</string>
-    <string name="share_text">🚀 Join TRIV-IA and test your knowledge! \nDownload the app at:\nGoogle Play: https://play.google.com/store/apps/details?id=cl.jlopezr.trivia\nApp Store: https://apps.apple.com/app/id-your-app\n\n🆔 My invite code is: %s</string>
+    <string name="share_text">🚀 Join TRIV-IA and test your knowledge! \nDownload the app at:\nGoogle Play: https://play.google.com/store/apps/details?id=cl.jlopezr.trivia\nApp Store: https://apps.apple.com/app/id-your-app\n\n🆔 My invite code is: %1$s</string>
     <string name="error_empty_category">Please enter a category</string>
+    <string name="splash_text">Do you think you can beat Einstein?</string>
 </resources>
 
 

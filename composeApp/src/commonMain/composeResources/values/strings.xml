@@ -22,7 +22,7 @@
 
     <!-- Home -->
     <string name="progress_label">PROGRESO</string>
-    <string name="level_format">Nivel %d</string>
+    <string name="level_format">Nivel %1$d</string>
     <string name="points_label">PUNTOS</string>
     <string name="prize_label">PREMIO</string>
     <string name="choose_category">Elige una categoría para jugar</string>
@@ -40,16 +40,16 @@
     <string name="sound_off">Silenciar</string>
 
     <!-- Game -->
-    <string name="game_level_format">Nivel: %d</string>
-    <string name="game_prize_format">Premio: $%s</string>
-    <string name="game_points_format">%d Pts</string>
+    <string name="game_level_format">Nivel: %1$d</string>
+    <string name="game_prize_format">Premio: $%1$s</string>
+    <string name="game_points_format">%1$d Pts</string>
     <string name="btn_retry">REINTENTAR</string>
     <string name="feedback_correct">¡CORRECTO!</string>
     <string name="feedback_correct_msg">¡Vas por buen camino!</string>
     <string name="feedback_incorrect">¡INCORRECTO!</string>
-    <string name="feedback_incorrect_msg">La respuesta correcta era: %s</string>
+    <string name="feedback_incorrect_msg">La respuesta correcta era: %1$s</string>
     <string name="feedback_level_up">¡BIEN HECHO!</string>
-    <string name="feedback_level_up_msg">Subiste al Nivel %d</string>
+    <string name="feedback_level_up_msg">Subiste al Nivel %1$d</string>
     <string name="feedback_timeout">¡TIEMPO AGOTADO!</string>
     <string name="feedback_timeout_msg">¡Inténtalo nuevamente!</string>
 
@@ -82,8 +82,9 @@
     <string name="verify_phone_title">Verifica tu número</string>
     <string name="enter_otp_instr">Ingresa el código que enviamos a tu celular</string>
     <string name="btn_verify">Verificar</string>
-    <string name="share_text">🚀 ¡Únete a TRIV-IA y pon a prueba tus conocimientos! \nDescarga la app en:\nGoogle Play: https://play.google.com/store/apps/details?id=cl.jlopezr.trivia\nApp Store: https://apps.apple.com/app/id-tu-app\n\n🆔 Mi código de invitado es: %s</string>
+    <string name="share_text">🚀 ¡Únete a TRIV-IA y pon a prueba tus conocimientos! \nDescarga la app en:\nGoogle Play: https://play.google.com/store/apps/details?id=cl.jlopezr.trivia\nApp Store: https://apps.apple.com/app/id-tu-app\n\n🆔 Mi código de invitado es: %1$s</string>
     <string name="error_empty_category">Escribe una categoría</string>
+    <string name="splash_text">¿Crees ganarle a Einstein?</string>
 </resources>
 
 
